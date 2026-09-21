@@ -32,7 +32,7 @@
 </head>
 <body class="bg-stone-100 text-stone-800 font-sans min-h-screen pb-16">
 
-  <!-- Shared Autocomplete Datalists -->
+  <!-- Autocomplete Shared Datalists -->
   <datalist id="known-ingredients-list"></datalist>
   <datalist id="cooking-types-list">
     <option value="Sheet Pan"></option>
@@ -43,15 +43,25 @@
     <option value="Skillet Hash"></option>
   </datalist>
 
-  <!-- Header Bar -->
+  <!-- Top Navigation Header -->
   <header class="bg-white border-b border-stone-200 sticky top-0 z-30 shadow-sm">
     <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-xl font-bold text-stone-900 flex items-center gap-2">
-          <i class="fa-solid fa-utensils text-brand-500"></i> Family Meal & Baby Nutrition Planner
-        </h1>
-        <p class="text-xs text-stone-500">1-Pan Dinners • Baby Breakfasts • Allergen Radar & Dynamic Grocery Prep</p>
+        <div class="flex items-center gap-2 flex-wrap">
+          <h1 class="text-xl font-bold text-stone-900 flex items-center gap-2">
+            <i class="fa-solid fa-utensils text-brand-500"></i> Family Meal & Baby Nutrition Planner
+          </h1>
+          <!-- Dynamic Stage Badge Button -->
+          <button onclick="openBabyStageModal()" id="header-stage-badge" class="px-2.5 py-0.5 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-full text-xs font-bold transition flex items-center gap-1.5 shadow-2xs">
+            <i class="fa-solid fa-baby text-amber-600"></i>
+            <span id="header-stage-label">Stage 1 (6-7 Mo)</span>
+            <i class="fa-solid fa-gear text-[10px] text-amber-700 opacity-70"></i>
+          </button>
+        </div>
+        <p class="text-xs text-stone-500">1-Pan Dinners • Stage-Gated Breakfasts • Iron & Allergen Tracking</p>
       </div>
+
+      <!-- Action Buttons -->
       <div class="flex items-center gap-2 flex-wrap">
         <button id="open-dinner-box-btn" class="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
           <i class="fa-solid fa-moon text-indigo-500"></i> Dinners (<span id="dinner-count-badge">0</span>)
@@ -78,20 +88,45 @@
     </div>
   </header>
 
+  <!-- Main Content Layout -->
   <main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-    <!-- Left Column: Allergen Radar & Weekly Schedule -->
-    <div class="lg:col-span-8 space-y-6">
+    <!-- Left Column: Age Banner, Allergen Radar & Schedule -->
+    <div class="lg:col-span-8 space-y-5">
+
+      <!-- Dynamic Stage Feeding Guidance Banner -->
+      <section id="stage-banner-card" class="bg-amber-50/90 border border-amber-200/90 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-200/80 text-amber-800 flex items-center justify-center text-lg shrink-0 mt-0.5">
+            <i class="fa-solid fa-baby-carriage"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span id="banner-stage-title" class="font-bold text-sm text-amber-950">Stage 1: 6–7 Months (Silky Purees & Smooth Mashes)</span>
+              <span id="banner-age-calc" class="text-[10px] font-semibold bg-amber-200/70 text-amber-900 px-2 py-0.2 rounded-full">Age ~ 7 mo</span>
+            </div>
+            <p id="banner-stage-desc" class="text-xs text-amber-900/90 mt-1 leading-relaxed">
+              Texture: Silky smooth fork-mash thinned with milk/formula/water. Priority on iron-rich single proteins & safe allergen introduction.
+            </p>
+          </div>
+        </div>
+        <button onclick="openBabyStageModal()" class="px-2.5 py-1.5 bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold shrink-0 transition flex items-center gap-1">
+          <i class="fa-solid fa-sliders"></i> Stage Settings
+        </button>
+      </section>
 
       <!-- Allergen & Nutrition Radar Tracker -->
       <section class="bg-white rounded-xl p-4 border border-stone-200 shadow-sm">
         <div class="flex items-center justify-between mb-2">
           <div>
             <h2 class="text-sm font-bold uppercase tracking-wider text-stone-700 flex items-center gap-2">
-              <i class="fa-solid fa-shield-halved text-brand-500"></i> Baby Allergen & Iron Radar
+              <i class="fa-solid fa-shield-halved text-brand-500"></i> Baby Allergen & Nutrition Radar
             </h2>
-            <p class="text-[11px] text-stone-400">Green check = In week's menu (auto-detected). Tap ⭐ to mark as Cleared/Tolerated.</p>
+            <p id="radar-subtext" class="text-[11px] text-stone-400">Green check = In week's menu. Tap ⭐ to mark as Cleared/Tolerated.</p>
           </div>
+          <span id="radar-safety-tag" class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+            <i class="fa-solid fa-triangle-exclamation"></i> No Honey Under 12m
+          </span>
         </div>
         <div id="radar-container" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
           <!-- Rendered via JS -->
@@ -102,7 +137,7 @@
       <section class="space-y-4">
         <div class="flex items-center justify-between">
           <h2 class="text-lg font-bold text-stone-900">7-Day Meal Schedule</h2>
-          <span class="text-xs text-stone-500 italic">Past days shaded • Highlighted day indicates Today</span>
+          <span class="text-xs text-stone-500 italic">Past days shaded • Today highlighted</span>
         </div>
 
         <div id="days-container" class="space-y-3">
@@ -111,7 +146,7 @@
       </section>
     </div>
 
-    <!-- Right Column: Grocery List with Scope Filters & Pantry Stash -->
+    <!-- Right Column: Consolidated Grocery List with Scope Filters -->
     <div class="lg:col-span-4 space-y-6">
       <section class="bg-white rounded-xl p-5 border border-stone-200 shadow-sm sticky top-20">
         <div class="flex items-center justify-between border-b border-stone-200 pb-3 mb-3">
@@ -139,7 +174,7 @@
           </button>
         </div>
 
-        <!-- Custom Item Adder -->
+        <!-- Custom Item Input -->
         <div class="flex gap-1.5 mb-4">
           <input id="custom-item-input" type="text" placeholder="Add extra staple (e.g. 1 bag coffee)..." class="w-full text-xs rounded-lg border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none" />
           <button id="add-custom-btn" class="px-3 py-2 bg-stone-800 hover:bg-stone-900 text-white rounded-lg text-xs font-semibold">
@@ -160,6 +195,74 @@
     </div>
 
   </main>
+
+  <!-- Baby Stage & Age Settings Modal -->
+  <div id="baby-stage-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-stone-200 flex justify-between items-center bg-stone-50">
+        <div>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-brand-600 flex items-center gap-1.5">
+            <i class="fa-solid fa-baby"></i> Pediatric Feeding Engine
+          </span>
+          <h3 class="font-black text-stone-900 text-lg">Baby Age & Stage Settings</h3>
+        </div>
+        <button onclick="closeModal('baby-stage-modal')" class="text-stone-400 hover:text-stone-700 text-xl p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-5 overflow-y-auto space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-stone-800 mb-1">Baby's Birthdate (Auto-calculates age)</label>
+          <input type="date" id="baby-birthdate-input" onchange="onBirthdateChanged(this.value)" class="w-full text-xs rounded-xl border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none bg-white" />
+          <p id="age-calc-feedback" class="text-[11px] text-stone-500 mt-1 italic">Enter birthdate to automatically advance stages as baby grows.</p>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-bold text-stone-800">Feeding Stage (Or manual override)</label>
+            <span class="text-[10px] text-stone-400">Controls unlocked breakfast recipes</span>
+          </div>
+          <select id="stage-override-select" onchange="onStageSelectChanged(this.value)" class="w-full text-xs rounded-xl border border-stone-300 px-3 py-2.5 bg-white font-medium focus:ring-1 focus:ring-brand-500 focus:outline-none">
+            <option value="stage_1">Stage 1: 6–7 Months (Silky Purees & Smooth Mashes)</option>
+            <option value="stage_2">Stage 2: 8–9 Months (Thick Mashes & Soft Lumps / Finger Foods)</option>
+            <option value="stage_3">Stage 3: 10–12 Months (Finely Chopped Table Foods & Bite-Size)</option>
+            <option value="stage_4">Stage 4: 12+ Months / Toddler (Full Family Table Food)</option>
+          </select>
+        </div>
+
+        <!-- Stage Comparison Preview Cards -->
+        <div class="space-y-2 pt-2 border-t border-stone-100">
+          <h4 class="font-bold text-[11px] uppercase tracking-wider text-stone-500">Stage Breakfast & Texture Rules</h4>
+          
+          <div class="grid grid-cols-1 gap-2 text-[11px]">
+            <div class="p-2.5 rounded-xl border border-amber-200 bg-amber-50/60">
+              <span class="font-bold text-amber-950 block">Stage 1 (6–7m): Smooth Puree & Thinned Oats</span>
+              <span class="text-amber-900">Unlocks Stage 1 breakfasts. Thinned infant oat cereal, purees, thinned peanut/almond butter, soft egg yolk.</span>
+            </div>
+            <div class="p-2.5 rounded-xl border border-stone-200 bg-stone-50">
+              <span class="font-bold text-stone-900 block">Stage 2 (8–9m): Thick Porridge & Soft Finger Strips</span>
+              <span class="text-stone-600">Unlocks Stage 1 & 2 breakfasts. Whole fluffy scrambled eggs, soft banana spears, chia/hemp yogurts.</span>
+            </div>
+            <div class="p-2.5 rounded-xl border border-stone-200 bg-stone-50">
+              <span class="font-bold text-stone-900 block">Stage 3 (10–12m): Pancake Bites & Chopped Fruit</span>
+              <span class="text-stone-600">Unlocks Stages 1–3. Baby oat/banana finger pancakes, chopped berries, toast strips with thin nut butter.</span>
+            </div>
+            <div class="p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/60">
+              <span class="font-bold text-emerald-950 block">Stage 4 (12m+): Family Breakfast & Cow's Milk</span>
+              <span class="text-emerald-900">All breakfasts unlocked. Regular rolled oats, whole cow's milk, honey allowed as natural sweetener.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-3 flex justify-end">
+          <button onclick="closeModal('baby-stage-modal')" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold transition">
+            Save & Update Planner
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Kitchen Cook Mode Modal -->
   <div id="cook-mode-modal" class="fixed inset-0 bg-stone-900/90 backdrop-blur-md z-50 flex items-center justify-center hidden p-4 sm:p-6">
@@ -182,12 +285,15 @@
       </div>
 
       <div class="p-6 overflow-y-auto space-y-6">
-        <!-- Baby Reminder Strip in Cook Mode -->
-        <div class="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 flex items-start gap-3 text-amber-900">
+        <div class="bg-amber-50 border border-amber-200/90 rounded-2xl p-4 flex items-start gap-3 text-amber-900">
           <i class="fa-solid fa-spoon text-amber-600 text-lg mt-0.5"></i>
           <div class="text-xs sm:text-sm leading-relaxed">
-            <span class="font-bold block text-amber-950 uppercase tracking-wide mb-0.5">Baby Portion Reminder</span>
-            Remember to scoop out portions for tonight's dinner & tomorrow's lunch before salting or heavy seasoning, then fork-mash, finely chop, or puree as needed (add water, breast milk, or formula to adjust texture).
+            <span class="font-bold block text-amber-950 uppercase tracking-wide mb-0.5" id="cook-mode-stage-badge">
+              Baby Portion Reminder (Stage 1)
+            </span>
+            <p id="cook-mode-stage-note">
+              Scoop before salting. Blend or fork-mash silky smooth with a splash of breast milk, formula, or warm water.
+            </p>
           </div>
         </div>
 
@@ -243,13 +349,13 @@
     </div>
   </div>
 
-  <!-- Baby Breakfast Box Modal -->
+  <!-- Baby Breakfast Box Modal with Stage Tags -->
   <div id="breakfast-box-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-xl overflow-hidden">
       <div class="p-4 border-b border-stone-200 flex justify-between items-center">
         <div>
           <h3 class="font-bold text-stone-900 text-base">Baby Breakfast Box</h3>
-          <p class="text-xs text-stone-500">Manage morning allergen and puree rotations</p>
+          <p class="text-xs text-stone-500">Manage morning allergen and puree rotations by stage</p>
         </div>
         <div class="flex items-center gap-2">
           <button onclick="openCreateBreakfastModal()" class="px-3 py-1.5 bg-sage-500 hover:bg-sage-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1">
@@ -264,13 +370,13 @@
     </div>
   </div>
 
-  <!-- Add / Edit Dinner Modal (Cleaned up: No Baby Instructions Field) -->
+  <!-- Add / Edit Dinner Modal -->
   <div id="dinner-form-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-xl overflow-hidden">
       <div class="p-4 border-b border-stone-200 flex justify-between items-center">
         <div>
           <h3 class="font-bold text-stone-900 text-base" id="dinner-form-modal-title">Dinner Recipe</h3>
-          <p class="text-xs text-stone-500">Standard baby portion reminders apply automatically</p>
+          <p class="text-xs text-stone-500">Click suggestions below to fill fields quickly</p>
         </div>
         <button onclick="closeModal('dinner-form-modal')" class="text-stone-400 hover:text-stone-700 text-lg p-1">
           <i class="fa-solid fa-xmark"></i>
@@ -328,13 +434,13 @@
     </div>
   </div>
 
-  <!-- Add / Edit Baby Breakfast Modal -->
+  <!-- Add / Edit Baby Breakfast Modal with Stage Selector -->
   <div id="breakfast-form-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-xl overflow-hidden">
       <div class="p-4 border-b border-stone-200 flex justify-between items-center">
         <div>
           <h3 class="font-bold text-stone-900 text-base" id="breakfast-form-modal-title">Baby Breakfast</h3>
-          <p class="text-xs text-stone-500">Configure morning rotation and nutrition tags</p>
+          <p class="text-xs text-stone-500">Configure morning rotation and unlock stage</p>
         </div>
         <button onclick="closeModal('breakfast-form-modal')" class="text-stone-400 hover:text-stone-700 text-lg p-1">
           <i class="fa-solid fa-xmark"></i>
@@ -348,10 +454,22 @@
           <input id="bf-input-title" required type="text" placeholder="e.g. Oat Cereal + Fruit Pouch + Peanut Butter" class="w-full rounded-lg border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none" />
         </div>
 
-        <div>
-          <label class="block font-semibold text-stone-700 mb-1">Allergens & Nutrition Tags</label>
-          <input id="bf-input-tags" type="text" placeholder="Click chips below..." class="w-full rounded-lg border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none" />
-          <div id="breakfast-tag-chips" class="flex flex-wrap gap-1 mt-1.5"></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-stone-700 mb-1">Minimum Suitable Stage *</label>
+            <select id="bf-input-stage" class="w-full text-xs rounded-lg border border-stone-300 px-2.5 py-2 bg-white font-medium focus:ring-1 focus:ring-brand-500 focus:outline-none">
+              <option value="stage_1">Stage 1 (6–7m+)</option>
+              <option value="stage_2">Stage 2 (8–9m+)</option>
+              <option value="stage_3">Stage 3 (10–12m+)</option>
+              <option value="stage_4">Stage 4 (12m+ Toddler)</option>
+            </select>
+            <p class="text-[10px] text-stone-400 mt-1">Available once baby reaches this stage.</p>
+          </div>
+          <div>
+            <label class="block font-semibold text-stone-700 mb-1">Allergens & Nutrition Tags</label>
+            <input id="bf-input-tags" type="text" placeholder="Click chips below..." class="w-full rounded-lg border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none" />
+            <div id="breakfast-tag-chips" class="flex flex-wrap gap-1 mt-1.5"></div>
+          </div>
         </div>
 
         <div>
@@ -376,6 +494,7 @@
     </div>
   </div>
 
+  <!-- JavaScript Application Logic -->
   <script>
     const AISLES = ['Produce', 'Meat & Poultry', 'Dairy & Refrigerated', 'Pantry & Spices', 'Baby Staples & Pouches', 'Bakery & Bread'];
     
@@ -417,10 +536,67 @@
       'Pasta'
     ];
 
-    // Standardized baby reminder text
-    const STANDARD_BABY_REMINDER = "Remember to scoop out portions for tonight's dinner & tomorrow's lunch before salting/seasoning, then mash/chop or puree as needed.";
+    // Stage rank values to compare unlocks
+    const STAGE_ORDER = {
+      stage_1: 1,
+      stage_2: 2,
+      stage_3: 3,
+      stage_4: 4
+    };
 
-    // 17 Curated 1-Pan Dinners without custom baby instructions
+    // Pediatric Stage Definitions
+    const BABY_STAGES = {
+      stage_1: {
+        id: 'stage_1',
+        title: 'Stage 1: 6–7 Months (Silky Purees & Smooth Mashes)',
+        shortLabel: 'Stage 1 (6–7m)',
+        minMonth: 6,
+        maxMonth: 7,
+        reminder: "Smooth Puree / Fine Fork-Mash: Scoop dinner & tomorrow's lunch before salting. Blend or fork-mash silky smooth with breast milk, formula, or warm broth.",
+        cookModeNote: "Blend or fork-mash silky smooth. Thin with breast milk, formula, or warm water. Focus on single allergen exposure and bioavailable iron.",
+        subtext: "Green check = In week's menu. Stage 1 focus: Single allergen introduction & pureed iron.",
+        safetyTagText: "No Honey Under 12m",
+        safetyTagClass: "bg-rose-50 text-rose-700 border-rose-200"
+      },
+      stage_2: {
+        id: 'stage_2',
+        title: 'Stage 2: 8–9 Months (Thick Mashes & Soft Lumps / Finger Foods)',
+        shortLabel: 'Stage 2 (8–9m)',
+        minMonth: 8,
+        maxMonth: 9,
+        reminder: "Thick Mash & Soft Lumps: Scoop before salting. Fork-mash leaving soft lumps. Offer soft finger pieces (steamed carrot spears, avocado slices) for grasp practice.",
+        cookModeNote: "Leave soft chewable lumps. Offer graspable spears (soft sweet potato wedges, steamed broccoli stems). Keep foods salt-free.",
+        subtext: "Stage 2 focus: Palmar grasp, chewing mechanics, and multi-texture exploration.",
+        safetyTagText: "No Honey Under 12m",
+        safetyTagClass: "bg-rose-50 text-rose-700 border-rose-200"
+      },
+      stage_3: {
+        id: 'stage_3',
+        title: 'Stage 3: 10–12 Months (Chopped Table Foods & Bite-Size)',
+        shortLabel: 'Stage 3 (10–12m)',
+        minMonth: 10,
+        maxMonth: 12,
+        reminder: "Finely Chopped Table Food: Scoop before heavy salting. Cut into bite-size pieces (pea-size) or tender shreds. Encourage self-feeding with fingers or spoon.",
+        cookModeNote: "Cut proteins and veggies into small pea-sized pieces or tender shreds. Encourage self-feeding with fingers. Keep added sodium minimal.",
+        subtext: "Stage 3 focus: Pincer grasp (thumb & forefinger) and transitioning toward family table foods.",
+        safetyTagText: "No Honey Under 12m",
+        safetyTagClass: "bg-rose-50 text-rose-700 border-rose-200"
+      },
+      stage_4: {
+        id: 'stage_4',
+        title: 'Stage 4: 12+ Months / Toddler (Full Family Table Food)',
+        shortLabel: 'Stage 4 (12m+ Toddler)',
+        minMonth: 13,
+        maxMonth: 999,
+        reminder: "Toddler Portion: Serve as regular table food in manageable bite-size pieces. Whole cow's milk and honey now safe; keep added salt and sugar light.",
+        cookModeNote: "Serve regular table meal in manageable pieces. Cow's milk and honey are now safe. Support spoon and open-cup drinking.",
+        subtext: "Stage 4 focus: Balanced meal variety, healthy family habits, and daily iron & calcium.",
+        safetyTagText: "Whole Milk & Honey Safe (12m+)",
+        safetyTagClass: "bg-emerald-50 text-emerald-700 border-emerald-200"
+      }
+    };
+
+    // 17 Curated 1-Pan Dinners
     const DEFAULT_DINNERS = [
       {
         id: 'rec_1',
@@ -704,10 +880,12 @@
       }
     ];
 
+    // Default Baby Breakfast Rotations (All assigned to stage_1 as base unlocked recipes)
     const DEFAULT_BREAKFASTS = [
       {
         id: 'bf_1',
         title: 'Oat Cereal + Fruit Pouch + Peanut Butter',
+        stage: 'stage_1',
         tags: ['Peanut', 'High Iron'],
         ingredients: [
           { name: 'Infant oat cereal', amount: 1, unit: 'box', category: 'Baby Staples & Pouches' },
@@ -718,6 +896,7 @@
       {
         id: 'bf_2',
         title: 'Soft Scrambled Egg Yolk + Mashed Avocado',
+        stage: 'stage_1',
         tags: ['Egg', 'Healthy Fat'],
         ingredients: [
           { name: 'Eggs', amount: 1, unit: 'whole', category: 'Dairy & Refrigerated' },
@@ -727,6 +906,7 @@
       {
         id: 'bf_3',
         title: 'Greek Yogurt + Fruit Pouch + Chia Seeds',
+        stage: 'stage_1',
         tags: ['Dairy', 'Healthy Fat'],
         ingredients: [
           { name: 'Plain whole-milk Greek yogurt', amount: 1, unit: 'tub', category: 'Dairy & Refrigerated' },
@@ -737,6 +917,7 @@
       {
         id: 'bf_4',
         title: 'Mashed Banana + Almond Butter + Oat Cereal',
+        stage: 'stage_1',
         tags: ['Tree Nut', 'High Iron'],
         ingredients: [
           { name: 'Bananas', amount: 1, unit: 'whole', category: 'Produce' },
@@ -747,6 +928,7 @@
       {
         id: 'bf_5',
         title: 'Whole Scrambled Egg + Fruit Pouch',
+        stage: 'stage_1',
         tags: ['Egg', 'Vitamin C'],
         ingredients: [
           { name: 'Eggs', amount: 1, unit: 'whole', category: 'Dairy & Refrigerated' },
@@ -756,6 +938,7 @@
       {
         id: 'bf_6',
         title: 'Greek Yogurt + Fruit Pouch + Hemp Hearts',
+        stage: 'stage_1',
         tags: ['Dairy', 'Healthy Fat'],
         ingredients: [
           { name: 'Plain whole-milk Greek yogurt', amount: 1, unit: 'tub', category: 'Dairy & Refrigerated' },
@@ -766,6 +949,7 @@
       {
         id: 'bf_7',
         title: 'Warm Prune Oatmeal + Tahini Swirl (Fiber & Iron)',
+        stage: 'stage_1',
         tags: ['Sesame', 'High Iron'],
         ingredients: [
           { name: 'Infant oat cereal', amount: 1, unit: 'box', category: 'Baby Staples & Pouches' },
@@ -777,6 +961,7 @@
 
     const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+    // State Initialization under storage key (_v10)
     let dinners = JSON.parse(localStorage.getItem('family_dinners_v10')) || DEFAULT_DINNERS;
     let breakfasts = JSON.parse(localStorage.getItem('family_breakfasts_v10')) || DEFAULT_BREAKFASTS;
 
@@ -795,6 +980,11 @@
     let clearedAllergens = JSON.parse(localStorage.getItem('family_cleared_allergens_v10')) || ['Peanut'];
     let customGroceries = JSON.parse(localStorage.getItem('family_custom_groceries_v10')) || [];
     let groceryScope = localStorage.getItem('family_grocery_scope_v10') || 'full';
+
+    // Pediatric Stage Engine State
+    let babyBirthdate = localStorage.getItem('family_baby_birthdate_v10') || '';
+    let selectedStageKey = localStorage.getItem('family_baby_stage_v10') || 'stage_1';
+
     let activeDaySelecting = null;
     let wakeLockSentinel = null;
 
@@ -807,12 +997,125 @@
       localStorage.setItem('family_cleared_allergens_v10', JSON.stringify(clearedAllergens));
       localStorage.setItem('family_custom_groceries_v10', JSON.stringify(customGroceries));
       localStorage.setItem('family_grocery_scope_v10', groceryScope);
+      localStorage.setItem('family_baby_birthdate_v10', babyBirthdate);
+      localStorage.setItem('family_baby_stage_v10', selectedStageKey);
       updateUI();
     }
 
     function getTodayDayIndex() {
       const day = new Date().getDay();
       return day === 0 ? 6 : day - 1;
+    }
+
+    // Age and Stage Computations
+    function calculateBabyAgeMonths(birthdateString) {
+      if (!birthdateString) return null;
+      const bDate = new Date(birthdateString + 'T00:00:00');
+      const now = new Date();
+      if (isNaN(bDate.getTime()) || bDate > now) return null;
+
+      let months = (now.getFullYear() - bDate.getFullYear()) * 12 + (now.getMonth() - bDate.getMonth());
+      if (now.getDate() < bDate.getDate()) {
+        months -= 1;
+      }
+      return Math.max(0, months);
+    }
+
+    function determineStageFromAge(months) {
+      if (months === null) return selectedStageKey || 'stage_1';
+      if (months < 8) return 'stage_1';
+      if (months < 10) return 'stage_2';
+      if (months < 13) return 'stage_3';
+      return 'stage_4';
+    }
+
+    function getCurrentStage() {
+      return BABY_STAGES[selectedStageKey] || BABY_STAGES.stage_1;
+    }
+
+    // Check if a breakfast is unlocked for the current baby stage
+    function isBreakfastUnlocked(bf, currentStageId) {
+      const bfStage = bf.stage || 'stage_1';
+      const requiredRank = STAGE_ORDER[bfStage] || 1;
+      const currentRank = STAGE_ORDER[currentStageId] || 1;
+      return currentRank >= requiredRank;
+    }
+
+    // Get all breakfasts unlocked for the current stage
+    function getAvailableBreakfasts() {
+      return breakfasts.filter(b => isBreakfastUnlocked(b, selectedStageKey));
+    }
+
+    function openBabyStageModal() {
+      document.getElementById('baby-birthdate-input').value = babyBirthdate;
+      document.getElementById('stage-override-select').value = selectedStageKey;
+      updateModalAgeFeedback();
+      openModal('baby-stage-modal');
+    }
+
+    function onBirthdateChanged(dateVal) {
+      babyBirthdate = dateVal;
+      const months = calculateBabyAgeMonths(dateVal);
+      if (months !== null) {
+        selectedStageKey = determineStageFromAge(months);
+        document.getElementById('stage-override-select').value = selectedStageKey;
+      }
+      updateModalAgeFeedback();
+      ensureBreakfastsMatchStage();
+      saveState();
+    }
+
+    function onStageSelectChanged(stageVal) {
+      selectedStageKey = stageVal;
+      ensureBreakfastsMatchStage();
+      saveState();
+    }
+
+    // Ensure currently assigned weekly breakfasts are valid for the active stage
+    function ensureBreakfastsMatchStage() {
+      const unlocked = getAvailableBreakfasts();
+      if (unlocked.length === 0) return;
+      const fallbackId = unlocked[0].id;
+
+      DAYS_OF_WEEK.forEach(day => {
+        const assignedId = currentWeeklyPlan[day]?.breakfast;
+        const currentBf = breakfasts.find(b => b.id === assignedId);
+        if (!currentBf || !isBreakfastUnlocked(currentBf, selectedStageKey)) {
+          if (!currentWeeklyPlan[day]) currentWeeklyPlan[day] = {};
+          currentWeeklyPlan[day].breakfast = fallbackId;
+        }
+      });
+    }
+
+    function updateModalAgeFeedback() {
+      const months = calculateBabyAgeMonths(babyBirthdate);
+      const feedback = document.getElementById('age-calc-feedback');
+      if (months !== null) {
+        feedback.innerText = `Calculated Age: ~${months} month${months === 1 ? '' : 's'} old. Automatically assigned to ${BABY_STAGES[determineStageFromAge(months)].shortLabel}.`;
+      } else {
+        feedback.innerText = "Enter birthdate to automatically calculate and advance stages as baby grows.";
+      }
+    }
+
+    function renderStageUI() {
+      const stage = getCurrentStage();
+      const months = calculateBabyAgeMonths(babyBirthdate);
+
+      document.getElementById('header-stage-label').innerText = stage.shortLabel;
+      document.getElementById('banner-stage-title').innerText = stage.title;
+      document.getElementById('banner-stage-desc').innerText = stage.reminder;
+      const ageCalcBadge = document.getElementById('banner-age-calc');
+      if (months !== null) {
+        ageCalcBadge.innerText = `Baby Age: ~${months} mo`;
+        ageCalcBadge.classList.remove('hidden');
+      } else {
+        ageCalcBadge.classList.add('hidden');
+      }
+
+      document.getElementById('radar-subtext').innerText = stage.subtext;
+      const safetyTag = document.getElementById('radar-safety-tag');
+      safetyTag.className = `text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 ${stage.safetyTagClass}`;
+      safetyTag.innerHTML = `<i class="fa-solid ${selectedStageKey === 'stage_4' ? 'fa-check' : 'fa-triangle-exclamation'}"></i> ${stage.safetyTagText}`;
     }
 
     function getKnownIngredientMap() {
@@ -844,6 +1147,7 @@
     function updateUI() {
       document.getElementById('dinner-count-badge').innerText = dinners.length;
       document.getElementById('breakfast-count-badge').innerText = breakfasts.length;
+      renderStageUI();
       refreshAutocompleteDatalist();
       renderPlanner();
       renderRadar();
@@ -894,7 +1198,6 @@
       });
     }
 
-    // Auto-detect allergens and iron from ingredient strings
     function detectNutritionFromIngredients(ingredientsList) {
       const detected = new Set();
       if (!ingredientsList || !Array.isArray(ingredientsList)) return detected;
@@ -914,15 +1217,24 @@
       return detected;
     }
 
+    // Render Schedule Cards with Stage-Filtered Breakfast Options
     function renderPlanner() {
       const container = document.getElementById('days-container');
       container.innerHTML = '';
       const todayIdx = getTodayDayIndex();
+      const currentStage = getCurrentStage();
+      const availableBreakfasts = getAvailableBreakfasts();
 
       DAYS_OF_WEEK.forEach((day, index) => {
         const assignment = currentWeeklyPlan[day] || { dinner: null, breakfast: null };
         const dinner = dinners.find(r => r.id === assignment.dinner);
-        const breakfast = breakfasts.find(b => b.id === assignment.breakfast);
+        let breakfast = breakfasts.find(b => b.id === assignment.breakfast);
+
+        // If currently assigned breakfast is locked for current stage, fallback to first available
+        if (breakfast && !isBreakfastUnlocked(breakfast, selectedStageKey)) {
+          breakfast = availableBreakfasts[0] || breakfast;
+          currentWeeklyPlan[day].breakfast = breakfast.id;
+        }
 
         const isPast = index < todayIdx;
         const isToday = index === todayIdx;
@@ -960,18 +1272,20 @@
           </div>
 
           <div class="p-4 grid grid-cols-1 md:grid-cols-12 gap-4">
-            <!-- Baby Breakfast Strip -->
+            <!-- Baby Breakfast Strip (Stage-Filtered Options) -->
             <div class="md:col-span-4 ${isPast ? 'bg-stone-300/40 border-stone-300' : 'bg-sage-50/70 border-sage-100/80'} rounded-lg p-3 border flex flex-col justify-between gap-2.5">
               <div class="space-y-1.5">
                 <div class="flex items-center justify-between">
                   <span class="text-[10px] uppercase font-bold tracking-wider ${isPast ? 'text-stone-500' : 'text-sage-700'} flex items-center gap-1">
                     <i class="fa-solid fa-sun ${isPast ? 'text-stone-400' : 'text-amber-500'}"></i> Baby Breakfast
                   </span>
-                  <span class="text-[10px] ${isPast ? 'text-stone-400' : 'text-sage-600'} font-medium">Rotation</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-white text-sage-700 border border-sage-200">
+                    ${currentStage.shortLabel}
+                  </span>
                 </div>
                 
                 <select onchange="changeBreakfast('${day}', this.value)" class="w-full text-xs bg-white border ${isPast ? 'border-stone-300 text-stone-500' : 'border-sage-200 text-stone-800'} rounded-md px-2 py-1.5 font-medium focus:ring-1 focus:ring-sage-500 focus:outline-none shadow-xs truncate cursor-pointer">
-                  ${breakfasts.map(b => `<option value="${b.id}" ${b.id === (breakfast ? breakfast.id : '') ? 'selected' : ''}>${b.title}</option>`).join('')}
+                  ${availableBreakfasts.map(b => `<option value="${b.id}" ${b.id === (breakfast ? breakfast.id : '') ? 'selected' : ''}>${b.title}</option>`).join('')}
                 </select>
               </div>
 
@@ -998,11 +1312,11 @@
                   <h4 class="text-sm font-bold ${isPast ? 'text-stone-700' : 'text-stone-900'} mb-1">${dinner.title}</h4>
                   <p class="text-xs ${isPast ? 'text-stone-500' : 'text-stone-600'} mb-2.5">${dinner.instructions || ''}</p>
                   
-                  <!-- Clean Standardized Baby Reminder Strip -->
+                  <!-- Dynamic Stage-Adaptive Reminder -->
                   <div class="${isPast ? 'bg-stone-300/50 border-stone-300 text-stone-600' : 'bg-amber-50/80 border-amber-200/70 text-amber-900'} border rounded-lg px-2.5 py-1.5 text-xs flex items-center gap-2">
                     <i class="fa-solid fa-spoon ${isPast ? 'text-stone-500' : 'text-amber-600'} text-xs"></i>
                     <span class="text-[11px] leading-snug">
-                      <strong class="${isPast ? 'text-stone-700' : 'text-amber-950'} font-semibold">Baby Portion:</strong> ${STANDARD_BABY_REMINDER}
+                      <strong class="${isPast ? 'text-stone-700' : 'text-amber-950'} font-semibold">Baby (${currentStage.shortLabel}):</strong> ${currentStage.reminder}
                     </span>
                   </div>
                 </div>
@@ -1030,6 +1344,7 @@
       saveState();
     }
 
+    // Radar Tracker with Auto-Detection
     function renderRadar() {
       const radarContainer = document.getElementById('radar-container');
       radarContainer.innerHTML = '';
@@ -1143,6 +1458,7 @@
       return DAYS_OF_WEEK;
     }
 
+    // Grocery Aggregation with Smart Container Caps
     function renderGroceryList() {
       const container = document.getElementById('grocery-list-container');
       const stashContainer = document.getElementById('pantry-stash-container');
@@ -1366,12 +1682,18 @@
       renderGroceryList();
     }
 
+    // Kitchen Cook Mode Logic
     async function openCookMode(dinnerId) {
       const dinner = dinners.find(d => d.id === dinnerId);
       if (!dinner) return;
 
+      const currentStage = getCurrentStage();
+
       document.getElementById('cook-mode-title').innerText = dinner.title;
       document.getElementById('cook-mode-instructions').innerText = dinner.instructions || 'No specific cooking instructions provided.';
+      
+      document.getElementById('cook-mode-stage-badge').innerText = `Baby Portion Guidance (${currentStage.shortLabel})`;
+      document.getElementById('cook-mode-stage-note').innerText = currentStage.cookModeNote;
 
       const ingContainer = document.getElementById('cook-mode-ingredients');
       ingContainer.innerHTML = '';
@@ -1407,6 +1729,7 @@
       closeModal('cook-mode-modal');
     }
 
+    // Recipe Box Management (Dinners)
     document.getElementById('open-dinner-box-btn').addEventListener('click', () => {
       const list = document.getElementById('dinner-box-list');
       list.innerHTML = '';
@@ -1477,6 +1800,7 @@
       }
     }
 
+    // Recipe Box Management (Breakfasts with Stage Badges)
     document.getElementById('open-breakfast-box-btn').addEventListener('click', () => {
       const list = document.getElementById('breakfast-box-list');
       list.innerHTML = '';
@@ -1484,14 +1808,24 @@
         list.innerHTML = `<p class="text-xs text-stone-400 text-center py-6">No breakfasts in your box.</p>`;
       } else {
         breakfasts.forEach(b => {
+          const bfStage = b.stage || 'stage_1';
+          const stageDef = BABY_STAGES[bfStage] || BABY_STAGES.stage_1;
+          const isUnlocked = isBreakfastUnlocked(b, selectedStageKey);
+
           const item = document.createElement('div');
           item.className = 'py-3 flex items-start justify-between gap-4';
           item.innerHTML = `
             <div class="flex-1">
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 flex-wrap mb-0.5">
                 <h4 class="text-xs font-bold text-stone-900">${b.title}</h4>
+                <!-- Stage Badge -->
+                <span class="text-[9px] font-bold px-2 py-0.5 rounded border ${
+                  isUnlocked ? 'bg-amber-50 text-amber-900 border-amber-300' : 'bg-stone-100 text-stone-400 border-stone-200'
+                }">
+                  <i class="fa-solid ${isUnlocked ? 'fa-lock-open text-amber-600' : 'fa-lock text-stone-400'}"></i> ${stageDef.shortLabel}
+                </span>
               </div>
-              <p class="text-[11px] text-stone-500 mt-1">${b.tags ? b.tags.join(', ') : ''}</p>
+              <p class="text-[11px] text-stone-500">${b.tags ? b.tags.join(', ') : ''}</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="editBreakfast('${b.id}')" class="text-stone-400 hover:text-sage-600 text-xs p-1 transition" title="Edit Breakfast">
@@ -1516,6 +1850,7 @@
       document.getElementById('breakfast-form-modal-title').innerText = 'Edit Baby Breakfast';
       document.getElementById('bf-edit-id').value = breakfast.id;
       document.getElementById('bf-input-title').value = breakfast.title || '';
+      document.getElementById('bf-input-stage').value = breakfast.stage || 'stage_1';
       document.getElementById('bf-input-tags').value = (breakfast.tags || []).join(', ');
 
       renderTagChips('breakfast-tag-chips', 'bf-input-tags');
@@ -1536,14 +1871,13 @@
     function deleteBreakfast(id) {
       if (confirm("Delete this baby breakfast recipe?")) {
         breakfasts = breakfasts.filter(b => b.id !== id);
-        DAYS_OF_WEEK.forEach(day => {
-          if (currentWeeklyPlan[day]?.breakfast === id) currentWeeklyPlan[day].breakfast = breakfasts[0]?.id || null;
-        });
+        ensureBreakfastsMatchStage();
         saveState();
         document.getElementById('open-breakfast-box-btn').click();
       }
     }
 
+    // Dynamic Ingredient Row
     function addIngredientRow(containerId, name = '', amount = '', unit = 'whole', category = 'Produce') {
       const container = document.getElementById(containerId);
       const row = document.createElement('div');
@@ -1650,6 +1984,7 @@
       document.getElementById('breakfast-form-modal-title').innerText = 'Add New Baby Breakfast';
       document.getElementById('breakfast-form').reset();
       document.getElementById('bf-edit-id').value = '';
+      document.getElementById('bf-input-stage').value = selectedStageKey || 'stage_1';
       document.getElementById('breakfast-ing-rows').innerHTML = '';
       renderTagChips('breakfast-tag-chips', 'bf-input-tags');
       addIngredientRow('breakfast-ing-rows', 'Infant oat cereal', 1, 'box', 'Baby Staples & Pouches');
@@ -1662,6 +1997,7 @@
       e.preventDefault();
       const editId = document.getElementById('bf-edit-id').value;
       const title = document.getElementById('bf-input-title').value.trim();
+      const stage = document.getElementById('bf-input-stage').value;
       const tags = document.getElementById('bf-input-tags').value.split(',').map(t => t.trim()).filter(Boolean);
 
       const ingredients = [];
@@ -1680,6 +2016,7 @@
           breakfasts[idx] = {
             ...breakfasts[idx],
             title,
+            stage,
             tags,
             ingredients
           };
@@ -1688,16 +2025,19 @@
         breakfasts.push({
           id: 'bf_' + Date.now(),
           title,
+          stage,
           tags,
           ingredients
         });
       }
 
+      ensureBreakfastsMatchStage();
       saveState();
       closeModal('breakfast-form-modal');
       document.getElementById('open-breakfast-box-btn').click();
     });
 
+    // Backup & Restore Handlers
     document.getElementById('export-backup-btn').addEventListener('click', () => {
       const backupData = {
         version: 10,
@@ -1709,7 +2049,9 @@
         stockedPantryItems,
         clearedAllergens,
         customGroceries,
-        groceryScope
+        groceryScope,
+        babyBirthdate,
+        selectedStageKey
       };
 
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
@@ -1730,13 +2072,19 @@
           const parsed = JSON.parse(evt.target.result);
           if (parsed && (parsed.dinners || parsed.recipes)) {
             dinners = parsed.dinners || parsed.recipes || dinners;
-            breakfasts = parsed.breakfasts || breakfasts;
+            breakfasts = (parsed.breakfasts || breakfasts).map(b => ({
+              ...b,
+              stage: b.stage || 'stage_1'
+            }));
             currentWeeklyPlan = parsed.currentWeeklyPlan || parsed.schedule || currentWeeklyPlan;
             checkedGroceries = parsed.checkedGroceries || [];
             stockedPantryItems = parsed.stockedPantryItems || [];
             clearedAllergens = parsed.clearedAllergens || ['Peanut'];
             customGroceries = parsed.customGroceries || [];
             groceryScope = parsed.groceryScope || 'full';
+            babyBirthdate = parsed.babyBirthdate || '';
+            selectedStageKey = parsed.selectedStageKey || 'stage_1';
+            ensureBreakfastsMatchStage();
             saveState();
             alert(`Backup restored successfully! Loaded ${dinners.length} dinners and ${breakfasts.length} breakfasts.`);
           } else {
@@ -1750,13 +2098,19 @@
       e.target.value = '';
     });
 
+    // Autofill (Selects ONLY from currently unlocked breakfasts)
     document.getElementById('autofill-btn').addEventListener('click', () => {
       if (dinners.length === 0) return alert('Add some dinners first!');
-      const shuffled = [...dinners].sort(() => 0.5 - Math.random());
+      const availableBfs = getAvailableBreakfasts();
+      if (availableBfs.length === 0) return alert('No breakfasts unlocked for current stage!');
+
+      const shuffledDinners = [...dinners].sort(() => 0.5 - Math.random());
+      const shuffledBfs = [...availableBfs].sort(() => 0.5 - Math.random());
+
       DAYS_OF_WEEK.forEach((day, idx) => {
         currentWeeklyPlan[day] = {
-          dinner: shuffled[idx % shuffled.length].id,
-          breakfast: breakfasts[idx % breakfasts.length]?.id || null
+          dinner: shuffledDinners[idx % shuffledDinners.length].id,
+          breakfast: shuffledBfs[idx % shuffledBfs.length].id
         };
       });
       checkedGroceries = [];
@@ -1764,8 +2118,10 @@
     });
 
     document.getElementById('clear-plan-btn').addEventListener('click', () => {
+      const availableBfs = getAvailableBreakfasts();
+      const defaultBfId = availableBfs[0]?.id || null;
       DAYS_OF_WEEK.forEach(day => {
-        currentWeeklyPlan[day] = { dinner: null, breakfast: breakfasts[0]?.id || null };
+        currentWeeklyPlan[day] = { dinner: null, breakfast: defaultBfId };
       });
       checkedGroceries = [];
       saveState();
@@ -1852,7 +2208,14 @@
       }, 1500);
     });
 
-    // Initial render call
+    // Check if birthdate is already present and calculate initial stage on load
+    const computedInitialMonths = calculateBabyAgeMonths(babyBirthdate);
+    if (computedInitialMonths !== null) {
+      selectedStageKey = determineStageFromAge(computedInitialMonths);
+    }
+    ensureBreakfastsMatchStage();
+
+    // Initial render
     updateUI();
   </script>
 </body>
