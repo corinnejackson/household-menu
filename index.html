@@ -32,7 +32,7 @@
 </head>
 <body class="bg-stone-100 text-stone-800 font-sans min-h-screen pb-16">
 
-  <!-- Autocomplete Shared Datalists -->
+  <!-- Shared Autocomplete Datalists -->
   <datalist id="known-ingredients-list"></datalist>
   <datalist id="cooking-types-list">
     <option value="Sheet Pan"></option>
@@ -43,14 +43,14 @@
     <option value="Skillet Hash"></option>
   </datalist>
 
-  <!-- Top Navigation / Header -->
+  <!-- Header Bar -->
   <header class="bg-white border-b border-stone-200 sticky top-0 z-30 shadow-sm">
     <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
       <div>
         <h1 class="text-xl font-bold text-stone-900 flex items-center gap-2">
           <i class="fa-solid fa-utensils text-brand-500"></i> Family Meal & Baby Nutrition Planner
         </h1>
-        <p class="text-xs text-stone-500">1-Pan Dinners • Baby Breakfasts • Iron & Allergen Tracking</p>
+        <p class="text-xs text-stone-500">1-Pan Dinners • Baby Breakfasts • Allergen Radar & Dynamic Grocery Prep</p>
       </div>
       <div class="flex items-center gap-2 flex-wrap">
         <button id="open-dinner-box-btn" class="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
@@ -80,21 +80,21 @@
 
   <main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-    <!-- Left Column: Weekly Schedule & Nutrition Tracker -->
+    <!-- Left Column: Allergen Radar & Weekly Schedule -->
     <div class="lg:col-span-8 space-y-6">
 
-      <!-- Allergen & Iron Radar Card with Cleared Toggle -->
+      <!-- Allergen & Nutrition Radar Tracker -->
       <section class="bg-white rounded-xl p-4 border border-stone-200 shadow-sm">
         <div class="flex items-center justify-between mb-2">
           <div>
             <h2 class="text-sm font-bold uppercase tracking-wider text-stone-700 flex items-center gap-2">
-              <i class="fa-solid fa-shield-halved text-brand-500"></i> Baby Allergen & Iron Tracker
+              <i class="fa-solid fa-shield-halved text-brand-500"></i> Baby Allergen & Iron Radar
             </h2>
-            <p class="text-[11px] text-stone-400">Green check = In week's menu. Tap ⭐ to mark an allergen as "Safe & Cleared".</p>
+            <p class="text-[11px] text-stone-400">Green check = In week's menu (auto-detected). Tap ⭐ to mark as Cleared/Tolerated.</p>
           </div>
         </div>
         <div id="radar-container" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-          <!-- Populated by JS -->
+          <!-- Rendered via JS -->
         </div>
       </section>
 
@@ -102,31 +102,44 @@
       <section class="space-y-4">
         <div class="flex items-center justify-between">
           <h2 class="text-lg font-bold text-stone-900">7-Day Meal Schedule</h2>
-          <span class="text-xs text-stone-500 italic">Dinner feeds adult lunch the next day</span>
+          <span class="text-xs text-stone-500 italic">Past days shaded • Highlighted day indicates Today</span>
         </div>
 
         <div id="days-container" class="space-y-3">
-          <!-- Populated by JS -->
+          <!-- Rendered via JS -->
         </div>
       </section>
     </div>
 
-    <!-- Right Column: Consolidated Grocery List -->
+    <!-- Right Column: Grocery List with Scope Filters & Pantry Stash -->
     <div class="lg:col-span-4 space-y-6">
       <section class="bg-white rounded-xl p-5 border border-stone-200 shadow-sm sticky top-20">
-        <div class="flex items-center justify-between border-b border-stone-200 pb-3 mb-4">
+        <div class="flex items-center justify-between border-b border-stone-200 pb-3 mb-3">
           <div>
             <h2 class="text-base font-bold text-stone-900 flex items-center gap-2">
               <i class="fa-solid fa-basket-shopping text-brand-500"></i> Grocery List
             </h2>
-            <p class="text-xs text-stone-500" id="grocery-summary-text">Quantities auto-summed (tubs & boxes kept to 1)</p>
+            <p class="text-xs text-stone-500" id="grocery-summary-text">Auto-summed with container caps</p>
           </div>
           <button id="copy-grocery-btn" class="p-2 text-stone-600 hover:text-brand-500 rounded-lg hover:bg-stone-100 transition" title="Copy needed items to clipboard">
             <i class="fa-regular fa-copy"></i>
           </button>
         </div>
 
-        <!-- Add Custom Staple Bar -->
+        <!-- Scope Filter Tabs -->
+        <div class="bg-stone-100 p-1 rounded-lg flex gap-1 mb-4 text-[11px] font-semibold">
+          <button id="scope-full-btn" onclick="setGroceryScope('full')" class="flex-1 py-1 px-2 rounded-md transition text-center shadow-xs bg-white text-stone-800">
+            Full Week
+          </button>
+          <button id="scope-rest-btn" onclick="setGroceryScope('rest')" class="flex-1 py-1 px-2 rounded-md transition text-center text-stone-500 hover:text-stone-800">
+            Rest of Week
+          </button>
+          <button id="scope-today-btn" onclick="setGroceryScope('today')" class="flex-1 py-1 px-2 rounded-md transition text-center text-stone-500 hover:text-stone-800">
+            Today Only
+          </button>
+        </div>
+
+        <!-- Custom Item Adder -->
         <div class="flex gap-1.5 mb-4">
           <input id="custom-item-input" type="text" placeholder="Add extra staple (e.g. 1 bag coffee)..." class="w-full text-xs rounded-lg border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none" />
           <button id="add-custom-btn" class="px-3 py-2 bg-stone-800 hover:bg-stone-900 text-white rounded-lg text-xs font-semibold">
@@ -134,21 +147,21 @@
           </button>
         </div>
 
-        <!-- Grocery Categories Container -->
-        <div id="grocery-list-container" class="space-y-4 max-h-[60vh] overflow-y-auto pr-1 text-xs">
-          <!-- Populated by JS -->
+        <!-- Active Grocery Items -->
+        <div id="grocery-list-container" class="space-y-4 max-h-[55vh] overflow-y-auto pr-1 text-xs">
+          <!-- Rendered via JS -->
         </div>
 
-        <!-- Stocked in Pantry Drawer (Collapsible) -->
+        <!-- Collapsible Pantry Stash -->
         <div id="pantry-stash-container" class="pt-3 border-t border-stone-100">
-          <!-- Populated by JS -->
+          <!-- Rendered via JS -->
         </div>
       </section>
     </div>
 
   </main>
 
-  <!-- Modal: Kitchen Cook Mode -->
+  <!-- Kitchen Cook Mode Modal -->
   <div id="cook-mode-modal" class="fixed inset-0 bg-stone-900/90 backdrop-blur-md z-50 flex items-center justify-center hidden p-4 sm:p-6">
     <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
       <div class="p-5 border-b border-stone-200 flex justify-between items-center bg-stone-50">
@@ -169,8 +182,17 @@
       </div>
 
       <div class="p-6 overflow-y-auto space-y-6">
+        <!-- Baby Reminder Strip in Cook Mode -->
+        <div class="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 flex items-start gap-3 text-amber-900">
+          <i class="fa-solid fa-spoon text-amber-600 text-lg mt-0.5"></i>
+          <div class="text-xs sm:text-sm leading-relaxed">
+            <span class="font-bold block text-amber-950 uppercase tracking-wide mb-0.5">Baby Portion Reminder</span>
+            Remember to scoop out portions for tonight's dinner & tomorrow's lunch before salting or heavy seasoning, then fork-mash, finely chop, or puree as needed (add water, breast milk, or formula to adjust texture).
+          </div>
+        </div>
+
         <div class="bg-stone-50 rounded-2xl p-4 border border-stone-200">
-          <h4 class="font-bold text-xs uppercase tracking-wider text-stone-500 mb-2">Needed For This Meal</h4>
+          <h4 class="font-bold text-xs uppercase tracking-wider text-stone-500 mb-2">Ingredients For This Meal</h4>
           <div id="cook-mode-ingredients" class="flex flex-wrap gap-2 text-xs text-stone-800"></div>
         </div>
 
@@ -180,24 +202,17 @@
           </h4>
           <p class="text-stone-800 text-base sm:text-lg leading-relaxed bg-indigo-50/40 p-4 rounded-2xl border border-indigo-100" id="cook-mode-instructions"></p>
         </div>
-
-        <div class="space-y-2">
-          <h4 class="font-bold text-sm uppercase tracking-wider text-amber-800 flex items-center gap-2">
-            <i class="fa-solid fa-spoon text-amber-600"></i> Baby Portion & Texture Guide
-          </h4>
-          <div class="bg-amber-50 p-4 rounded-2xl border border-amber-200 text-stone-800 text-base sm:text-lg leading-relaxed" id="cook-mode-baby"></div>
-        </div>
       </div>
     </div>
   </div>
 
-  <!-- Modal: Assign Dinner to Day -->
+  <!-- Assign Dinner Modal -->
   <div id="recipe-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-xl overflow-hidden">
       <div class="p-4 border-b border-stone-200 flex justify-between items-center">
         <div>
           <h3 class="font-bold text-stone-900 text-base" id="modal-title">Select Recipe</h3>
-          <p class="text-xs text-stone-500">Choose a dinner from your collection</p>
+          <p class="text-xs text-stone-500">Choose a dinner from your library</p>
         </div>
         <button onclick="closeModal('recipe-modal')" class="text-stone-400 hover:text-stone-700 text-lg p-1">
           <i class="fa-solid fa-xmark"></i>
@@ -207,13 +222,13 @@
     </div>
   </div>
 
-  <!-- Modal: Dinner Recipe Box -->
+  <!-- Dinner Recipe Box Modal -->
   <div id="dinner-box-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-xl overflow-hidden">
       <div class="p-4 border-b border-stone-200 flex justify-between items-center">
         <div>
           <h3 class="font-bold text-stone-900 text-base">Dinner Recipe Box</h3>
-          <p class="text-xs text-stone-500">Manage, edit, and organize dinner recipes</p>
+          <p class="text-xs text-stone-500">Manage, edit, and organize dinners</p>
         </div>
         <div class="flex items-center gap-2">
           <button onclick="openCreateDinnerModal()" class="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1">
@@ -228,13 +243,13 @@
     </div>
   </div>
 
-  <!-- Modal: Baby Breakfast Recipe Box -->
+  <!-- Baby Breakfast Box Modal -->
   <div id="breakfast-box-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-xl overflow-hidden">
       <div class="p-4 border-b border-stone-200 flex justify-between items-center">
         <div>
           <h3 class="font-bold text-stone-900 text-base">Baby Breakfast Box</h3>
-          <p class="text-xs text-stone-500">Manage, edit, and organize morning rotations</p>
+          <p class="text-xs text-stone-500">Manage morning allergen and puree rotations</p>
         </div>
         <div class="flex items-center gap-2">
           <button onclick="openCreateBreakfastModal()" class="px-3 py-1.5 bg-sage-500 hover:bg-sage-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1">
@@ -249,13 +264,13 @@
     </div>
   </div>
 
-  <!-- Modal: Add / Edit Dinner -->
+  <!-- Add / Edit Dinner Modal (Cleaned up: No Baby Instructions Field) -->
   <div id="dinner-form-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-xl overflow-hidden">
       <div class="p-4 border-b border-stone-200 flex justify-between items-center">
         <div>
           <h3 class="font-bold text-stone-900 text-base" id="dinner-form-modal-title">Dinner Recipe</h3>
-          <p class="text-xs text-stone-500">Click suggestions below to fill fields quickly</p>
+          <p class="text-xs text-stone-500">Standard baby portion reminders apply automatically</p>
         </div>
         <button onclick="closeModal('dinner-form-modal')" class="text-stone-400 hover:text-stone-700 text-lg p-1">
           <i class="fa-solid fa-xmark"></i>
@@ -287,13 +302,8 @@
         </div>
 
         <div>
-          <label class="block font-semibold text-stone-700 mb-1">Adult Cooking Instructions</label>
-          <textarea id="din-input-instructions" rows="2" placeholder="Brief steps..." class="w-full rounded-lg border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none"></textarea>
-        </div>
-
-        <div>
-          <label class="block font-semibold text-stone-700 mb-1">Baby Portion & Mash Instructions</label>
-          <textarea id="din-input-baby" rows="2" placeholder="e.g. Scoop 2 tbsp before salting and fork-mash..." class="w-full rounded-lg border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none"></textarea>
+          <label class="block font-semibold text-stone-700 mb-1">Cooking Instructions</label>
+          <textarea id="din-input-instructions" rows="3" placeholder="Step-by-step steps for cooking..." class="w-full rounded-lg border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none"></textarea>
         </div>
 
         <div>
@@ -318,13 +328,13 @@
     </div>
   </div>
 
-  <!-- Modal: Add / Edit Baby Breakfast -->
+  <!-- Add / Edit Baby Breakfast Modal -->
   <div id="breakfast-form-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-xl overflow-hidden">
       <div class="p-4 border-b border-stone-200 flex justify-between items-center">
         <div>
           <h3 class="font-bold text-stone-900 text-base" id="breakfast-form-modal-title">Baby Breakfast</h3>
-          <p class="text-xs text-stone-500">Configure morning rotation and allergens</p>
+          <p class="text-xs text-stone-500">Configure morning rotation and nutrition tags</p>
         </div>
         <button onclick="closeModal('breakfast-form-modal')" class="text-stone-400 hover:text-stone-700 text-lg p-1">
           <i class="fa-solid fa-xmark"></i>
@@ -335,7 +345,7 @@
         <input type="hidden" id="bf-edit-id" value="" />
         <div>
           <label class="block font-semibold text-stone-700 mb-1">Breakfast Title *</label>
-          <input id="bf-input-title" required type="text" placeholder="e.g. Oatmeal + Pear Puree + Peanut Butter" class="w-full rounded-lg border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none" />
+          <input id="bf-input-title" required type="text" placeholder="e.g. Oat Cereal + Fruit Pouch + Peanut Butter" class="w-full rounded-lg border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none" />
         </div>
 
         <div>
@@ -387,7 +397,6 @@
       'as needed'
     ];
 
-    // Multi-use bulk containers that shouldn't sum past 1
     const BULK_CONTAINER_UNITS = ['box', 'tub', 'canister', 'bunch', 'as needed'];
 
     const STANDARD_TAGS = [
@@ -408,7 +417,10 @@
       'Pasta'
     ];
 
-    // Default Starter Recipes
+    // Standardized baby reminder text
+    const STANDARD_BABY_REMINDER = "Remember to scoop out portions for tonight's dinner & tomorrow's lunch before salting/seasoning, then mash/chop or puree as needed.";
+
+    // 17 Curated 1-Pan Dinners without custom baby instructions
     const DEFAULT_DINNERS = [
       {
         id: 'rec_1',
@@ -424,7 +436,6 @@
           { name: 'Dried rosemary', amount: null, unit: 'as needed', category: 'Pantry & Spices' }
         ],
         instructions: 'Toss diced sweet potatoes and broccoli florets with olive oil, garlic powder, and rosemary. Lay on baking sheet with chicken thighs. Roast at 400°F (200°C) for 25-30 mins until chicken is cooked through and sweet potatoes are soft.',
-        babyInstructions: 'Fork-mash roasted sweet potato with a tender broccoli floret and finely shred 1 tbsp chicken thigh (dark meat provides double the iron of breast meat).',
         allergens: []
       },
       {
@@ -441,7 +452,6 @@
           { name: 'Garlic', amount: 3, unit: 'cloves', category: 'Produce' }
         ],
         instructions: 'Brown ground beef with diced onion and garlic in a deep skillet. Stir in dry rice, frozen peas and carrots, and broth. Cover and simmer 15-18 mins until liquid is absorbed and rice is fluffy.',
-        babyInstructions: 'Scoop 2-3 tbsp before heavy salting. Fork-mash the soft ground beef, rice, and tender sweet peas with a splash of breast milk, formula, or warm water.',
         allergens: []
       },
       {
@@ -458,7 +468,6 @@
           { name: 'Cinnamon', amount: null, unit: 'as needed', category: 'Pantry & Spices' }
         ],
         instructions: 'Slice carrots and apple wedges. Place on sheet pan around seasoned pork tenderloin. Drizzle with olive oil, thyme, and a pinch of cinnamon on the apples. Roast at 400°F for 20-25 mins until pork reaches 145°F.',
-        babyInstructions: 'Fork-mash roasted apple and carrot into a naturally sweet, silky puree. Pair with a small spoonful of finely shredded, tender pork.',
         allergens: []
       },
       {
@@ -478,7 +487,6 @@
           { name: 'Olive oil', amount: null, unit: 'as needed', category: 'Pantry & Spices' }
         ],
         instructions: 'Sauté sliced chicken, bell peppers, and onions in olive oil with cumin and mild chili powder until chicken is tender. Fold in drained black beans in the final 3 mins to warm.',
-        babyInstructions: 'Fork-mash rinsed black beans with a generous slice of ripe avocado and finely shredded chicken thigh. High in non-heme + heme iron and healthy brain fats.',
         allergens: ['Legumes']
       },
       {
@@ -495,7 +503,6 @@
           { name: 'Dried oregano', amount: null, unit: 'as needed', category: 'Pantry & Spices' }
         ],
         instructions: 'Halve yellow potatoes and toss with olive oil, lemon juice, and oregano on a sheet pan. Roast 15 mins. Add chicken thighs and green beans; roast another 20 mins until potatoes are tender and golden.',
-        babyInstructions: 'Mash soft yellow potato with tender green bean tips and finely shredded lemon chicken.',
         allergens: []
       },
       {
@@ -511,7 +518,6 @@
           { name: 'Paprika', amount: null, unit: 'as needed', category: 'Pantry & Spices' }
         ],
         instructions: 'Toss diced sweet potatoes and bell peppers with olive oil and paprika. Roast 15 mins. Add sliced chicken sausage rounds and roast 12 mins until sausage is browned and potatoes are tender.',
-        babyInstructions: 'Sweet potatoes mash into an easy base. Remove skin from sausage, finely mince a small portion, and mix together.',
         allergens: []
       },
       {
@@ -529,7 +535,6 @@
           { name: 'Low-sodium broth', amount: 1, unit: 'cups', category: 'Pantry & Spices' }
         ],
         instructions: 'Brown ground chicken or turkey with garlic, thyme, and mixed veggies. Add a splash of broth to create a light gravy. Top skillet with warm mashed potatoes and broil 3 mins.',
-        babyInstructions: 'Scoop directly from skillet: soft ground poultry, peas, carrots, and mashed potato provide a complete, naturally soft meal.',
         allergens: []
       },
       {
@@ -545,7 +550,6 @@
           { name: 'Low-sodium broth', amount: 2.5, unit: 'cups', category: 'Pantry & Spices' }
         ],
         instructions: 'Brown beef in skillet. Add dry macaroni, broth, and finely chopped broccoli. Cover and simmer 10 mins until pasta is soft. Turn off heat and stir in shredded cheddar cheese.',
-        babyInstructions: 'Scoop pasta, beef, and broccoli. Mince finely or fork-mash. Great exposure for mild melted dairy cheese.',
         allergens: ['Dairy', 'Wheat']
       },
       {
@@ -563,7 +567,6 @@
           { name: 'Olive oil', amount: null, unit: 'as needed', category: 'Pantry & Spices' }
         ],
         instructions: 'Roast potatoes, zucchini, and oregano-rubbed chicken on sheet pan at 400°F for 25 mins. Serve adults with tzatziki or plain Greek yogurt dollop.',
-        babyInstructions: 'Mash tender zucchini and roasted potato with a spoonful of cool, plain Greek yogurt and soft shredded chicken.',
         allergens: ['Dairy']
       },
       {
@@ -581,7 +584,6 @@
           { name: 'Low-sodium broth', amount: 1.5, unit: 'cups', category: 'Pantry & Spices' }
         ],
         instructions: 'Brown ground turkey with herbs. Pour in crushed tomatoes, broth, and dry pasta. Simmer covered until pasta is cooked. Stir in baby spinach to wilt and a splash of cream.',
-        babyInstructions: 'The crushed tomato sauce is packed with Vitamin C, maximizing iron absorption from the ground turkey. Mash together with soft pasta and tender spinach.',
         allergens: ['Dairy', 'Wheat']
       },
       {
@@ -599,7 +601,6 @@
           { name: 'White or jasmine rice', amount: 1.5, unit: 'cups', category: 'Pantry & Spices' }
         ],
         instructions: 'Sauté beef with ginger and garlic in a drizzle of sesame oil. Steam broccoli florets directly in the skillet with 3 tbsp water until tender-crisp. Serve with warm rice.',
-        babyInstructions: 'Fork-mash very soft steamed broccoli and tender beef with warm rice and a drop of toasted sesame oil (introducing sesame allergen).',
         allergens: ['Sesame']
       },
       {
@@ -616,7 +617,6 @@
           { name: 'Garlic powder', amount: null, unit: 'as needed', category: 'Pantry & Spices' }
         ],
         instructions: 'Toss halved potatoes and broccoli florets in olive oil and garlic. Arrange chicken thighs on sheet pan (brush adults with BBQ sauce). Bake at 400°F for 25-30 mins.',
-        babyInstructions: 'Baby gets plain roast chicken thigh (before BBQ sauce sugar) shredded and mashed with soft golden potato and broccoli.',
         allergens: []
       },
       {
@@ -634,7 +634,6 @@
           { name: 'Garlic', amount: 2, unit: 'cloves', category: 'Produce' }
         ],
         instructions: 'Brown beef with cumin and garlic. Stir in rinsed black beans, diced tomatoes, and corn/rice. Simmer 5 mins. Top with shredded cheese until melted.',
-        babyInstructions: 'Fork-mash tender beef and black beans with warm melted cheese and diced tomato. Dual iron source + calcium/dairy.',
         allergens: ['Dairy', 'Legumes']
       },
       {
@@ -651,7 +650,6 @@
           { name: 'Garlic', amount: 2, unit: 'cloves', category: 'Produce' }
         ],
         instructions: 'Brown ground poultry with garlic. Push to side, scramble 2 eggs into soft curds. Stir in cooked rice, peas, carrots, and sesame oil until piping hot.',
-        babyInstructions: 'Scoop 3 tbsp of the soft fried rice mix. Naturally provides whole cooked egg (allergen), sesame, and tender poultry in small, chewable bites.',
         allergens: ['Egg', 'Sesame']
       },
       {
@@ -668,7 +666,6 @@
           { name: 'Garlic powder', amount: null, unit: 'as needed', category: 'Pantry & Spices' }
         ],
         instructions: 'Toss diced potatoes in oil and roast 15 mins. Add chicken thighs and asparagus spears. Roast another 15 mins until chicken is cooked and asparagus is tender.',
-        babyInstructions: 'Asparagus tips become tender enough to mash with the back of a fork. Blend with soft potato and finely shredded dark chicken meat.',
         allergens: []
       },
       {
@@ -687,7 +684,6 @@
           { name: 'Burger buns', amount: 1, unit: 'pack', category: 'Bakery & Bread' }
         ],
         instructions: 'Sauté onion and bell pepper until soft. Brown ground meat. Add tomato sauce, tomato paste, garlic, and paprika. Simmer 10 mins until thick and saucy. Serve on toasted buns.',
-        babyInstructions: 'The rich tomato-simmered meat sauce is naturally smooth and soft. Scoop 2-3 tbsp directly into baby bowl—Vitamin C in tomatoes maximizes the meat iron.',
         allergens: ['Wheat']
       },
       {
@@ -704,7 +700,6 @@
           { name: 'Cinnamon', amount: null, unit: 'as needed', category: 'Pantry & Spices' }
         ],
         instructions: 'Toss sweet potatoes, apple wedges, and chicken with olive oil, a drizzle of pure maple syrup (safe alternative to honey), and cinnamon. Roast at 400°F for 25-30 mins.',
-        babyInstructions: 'Apples and sweet potatoes bake to pure velvet. Fork-mash together with a spoonful of moist chicken thigh.',
         allergens: []
       }
     ];
@@ -782,11 +777,10 @@
 
     const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-    // State Initialization
-    let dinners = JSON.parse(localStorage.getItem('family_dinners_v7')) || DEFAULT_DINNERS;
-    let breakfasts = JSON.parse(localStorage.getItem('family_breakfasts_v7')) || DEFAULT_BREAKFASTS;
+    let dinners = JSON.parse(localStorage.getItem('family_dinners_v10')) || DEFAULT_DINNERS;
+    let breakfasts = JSON.parse(localStorage.getItem('family_breakfasts_v10')) || DEFAULT_BREAKFASTS;
 
-    let currentWeeklyPlan = JSON.parse(localStorage.getItem('family_weekly_plan_v7')) || {
+    let currentWeeklyPlan = JSON.parse(localStorage.getItem('family_weekly_plan_v10')) || {
       Monday: { dinner: 'rec_1', breakfast: 'bf_1' },
       Tuesday: { dinner: 'rec_2', breakfast: 'bf_2' },
       Wednesday: { dinner: 'rec_4', breakfast: 'bf_3' },
@@ -796,22 +790,29 @@
       Sunday: { dinner: 'rec_16', breakfast: 'bf_7' }
     };
 
-    let checkedGroceries = JSON.parse(localStorage.getItem('family_checked_groceries_v7')) || [];
-    let stockedPantryItems = JSON.parse(localStorage.getItem('family_stocked_pantry_v7')) || [];
-    let clearedAllergens = JSON.parse(localStorage.getItem('family_cleared_allergens_v7')) || ['Peanut'];
-    let customGroceries = JSON.parse(localStorage.getItem('family_custom_groceries_v7')) || [];
+    let checkedGroceries = JSON.parse(localStorage.getItem('family_checked_groceries_v10')) || [];
+    let stockedPantryItems = JSON.parse(localStorage.getItem('family_stocked_pantry_v10')) || [];
+    let clearedAllergens = JSON.parse(localStorage.getItem('family_cleared_allergens_v10')) || ['Peanut'];
+    let customGroceries = JSON.parse(localStorage.getItem('family_custom_groceries_v10')) || [];
+    let groceryScope = localStorage.getItem('family_grocery_scope_v10') || 'full';
     let activeDaySelecting = null;
     let wakeLockSentinel = null;
 
     function saveState() {
-      localStorage.setItem('family_dinners_v7', JSON.stringify(dinners));
-      localStorage.setItem('family_breakfasts_v7', JSON.stringify(breakfasts));
-      localStorage.setItem('family_weekly_plan_v7', JSON.stringify(currentWeeklyPlan));
-      localStorage.setItem('family_checked_groceries_v7', JSON.stringify(checkedGroceries));
-      localStorage.setItem('family_stocked_pantry_v7', JSON.stringify(stockedPantryItems));
-      localStorage.setItem('family_cleared_allergens_v7', JSON.stringify(clearedAllergens));
-      localStorage.setItem('family_custom_groceries_v7', JSON.stringify(customGroceries));
+      localStorage.setItem('family_dinners_v10', JSON.stringify(dinners));
+      localStorage.setItem('family_breakfasts_v10', JSON.stringify(breakfasts));
+      localStorage.setItem('family_weekly_plan_v10', JSON.stringify(currentWeeklyPlan));
+      localStorage.setItem('family_checked_groceries_v10', JSON.stringify(checkedGroceries));
+      localStorage.setItem('family_stocked_pantry_v10', JSON.stringify(stockedPantryItems));
+      localStorage.setItem('family_cleared_allergens_v10', JSON.stringify(clearedAllergens));
+      localStorage.setItem('family_custom_groceries_v10', JSON.stringify(customGroceries));
+      localStorage.setItem('family_grocery_scope_v10', groceryScope);
       updateUI();
+    }
+
+    function getTodayDayIndex() {
+      const day = new Date().getDay();
+      return day === 0 ? 6 : day - 1;
     }
 
     function getKnownIngredientMap() {
@@ -846,6 +847,7 @@
       refreshAutocompleteDatalist();
       renderPlanner();
       renderRadar();
+      renderGroceryScopeButtons();
       renderGroceryList();
       renderTagChips('dinner-tag-chips', 'din-input-tags');
       renderTagChips('breakfast-tag-chips', 'bf-input-tags');
@@ -892,27 +894,63 @@
       });
     }
 
+    // Auto-detect allergens and iron from ingredient strings
+    function detectNutritionFromIngredients(ingredientsList) {
+      const detected = new Set();
+      if (!ingredientsList || !Array.isArray(ingredientsList)) return detected;
+
+      ingredientsList.forEach(ing => {
+        const str = (ing.name || '').toLowerCase();
+        if (str.includes('peanut')) detected.add('Peanut');
+        if (str.includes('almond') || str.includes('cashew') || str.includes('walnut') || str.includes('pecan') || str.includes('hazelnut') || str.includes('pistachio')) detected.add('Tree Nut');
+        if (str.includes('egg')) detected.add('Egg');
+        if (str.includes('yogurt') || str.includes('cheese') || str.includes('milk') || str.includes('cream') || str.includes('butter') || str.includes('tzatziki')) detected.add('Dairy');
+        if (str.includes('sesame') || str.includes('tahini')) detected.add('Sesame');
+        if (str.includes('black bean') || str.includes('lentil') || str.includes('chickpea') || str.includes('peas') || str.includes('edamame') || str.includes('kidney bean')) detected.add('Legumes');
+        if (str.includes('pasta') || str.includes('bread') || str.includes('bun') || str.includes('macaroni') || str.includes('tortilla') || str.includes('orzo') || str.includes('flour')) detected.add('Wheat');
+        if (str.includes('beef') || str.includes('steak') || str.includes('chicken thigh') || str.includes('turkey') || str.includes('oat cereal') || str.includes('lentil') || str.includes('spinach') || str.includes('pork')) detected.add('High Iron');
+      });
+
+      return detected;
+    }
+
     function renderPlanner() {
       const container = document.getElementById('days-container');
       container.innerHTML = '';
+      const todayIdx = getTodayDayIndex();
 
-      DAYS_OF_WEEK.forEach((day) => {
+      DAYS_OF_WEEK.forEach((day, index) => {
         const assignment = currentWeeklyPlan[day] || { dinner: null, breakfast: null };
         const dinner = dinners.find(r => r.id === assignment.dinner);
         const breakfast = breakfasts.find(b => b.id === assignment.breakfast);
 
+        const isPast = index < todayIdx;
+        const isToday = index === todayIdx;
+
         const card = document.createElement('div');
-        card.className = 'bg-white rounded-xl border border-stone-200 overflow-hidden shadow-sm transition hover:border-stone-300';
-        
+        card.className = `rounded-xl border overflow-hidden shadow-sm transition ${
+          isPast 
+            ? 'bg-stone-200/70 border-stone-300 opacity-60' 
+            : isToday 
+              ? 'bg-white border-brand-400 ring-2 ring-brand-200/50' 
+              : 'bg-white border-stone-200 hover:border-stone-300'
+        }`;
+
         card.innerHTML = `
-          <div class="bg-stone-50/80 px-4 py-2 border-b border-stone-100 flex items-center justify-between">
+          <div class="${isPast ? 'bg-stone-300/60' : isToday ? 'bg-brand-50/70' : 'bg-stone-50/80'} px-4 py-2 border-b ${isPast ? 'border-stone-300' : 'border-stone-100'} flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <span class="w-6 h-6 rounded-full bg-brand-500 text-white flex items-center justify-center text-xs font-bold">${day.substring(0, 2)}</span>
-              <h3 class="font-bold text-stone-900 text-sm">${day}</h3>
+              <span class="w-6 h-6 rounded-full ${isToday ? 'bg-brand-600 ring-2 ring-brand-300' : isPast ? 'bg-stone-400' : 'bg-brand-500'} text-white flex items-center justify-center text-xs font-bold">
+                ${day.substring(0, 2)}
+              </span>
+              <h3 class="font-bold ${isPast ? 'text-stone-600' : 'text-stone-900'} text-sm flex items-center gap-2">
+                ${day}
+                ${isToday ? '<span class="px-1.5 py-0.2 bg-brand-500 text-white rounded text-[10px] font-extrabold uppercase tracking-wider">Today</span>' : ''}
+                ${isPast ? '<span class="text-[11px] text-stone-400 font-normal italic">(Past)</span>' : ''}
+              </h3>
             </div>
             
             <div class="flex items-center gap-2">
-              <button onclick="shuffleSingleDay('${day}')" class="text-xs text-stone-500 hover:text-brand-600 font-semibold flex items-center gap-1 transition" title="Swap just today's dinner">
+              <button onclick="shuffleSingleDay('${day}')" class="text-xs ${isPast ? 'text-stone-400' : 'text-stone-500'} hover:text-brand-600 font-semibold flex items-center gap-1 transition" title="Swap just today's dinner">
                 <i class="fa-solid fa-shuffle text-[11px]"></i> Shuffle
               </button>
               <button onclick="openRecipeModal('${day}')" class="text-xs text-brand-600 hover:text-brand-700 font-semibold flex items-center gap-1">
@@ -923,22 +961,22 @@
 
           <div class="p-4 grid grid-cols-1 md:grid-cols-12 gap-4">
             <!-- Baby Breakfast Strip -->
-            <div class="md:col-span-4 bg-sage-50/70 rounded-lg p-3 border border-sage-100/80 flex flex-col justify-between gap-2.5">
+            <div class="md:col-span-4 ${isPast ? 'bg-stone-300/40 border-stone-300' : 'bg-sage-50/70 border-sage-100/80'} rounded-lg p-3 border flex flex-col justify-between gap-2.5">
               <div class="space-y-1.5">
                 <div class="flex items-center justify-between">
-                  <span class="text-[10px] uppercase font-bold tracking-wider text-sage-700 flex items-center gap-1">
-                    <i class="fa-solid fa-sun text-amber-500"></i> Baby Breakfast
+                  <span class="text-[10px] uppercase font-bold tracking-wider ${isPast ? 'text-stone-500' : 'text-sage-700'} flex items-center gap-1">
+                    <i class="fa-solid fa-sun ${isPast ? 'text-stone-400' : 'text-amber-500'}"></i> Baby Breakfast
                   </span>
-                  <span class="text-[10px] text-sage-600 font-medium">Rotation</span>
+                  <span class="text-[10px] ${isPast ? 'text-stone-400' : 'text-sage-600'} font-medium">Rotation</span>
                 </div>
                 
-                <select onchange="changeBreakfast('${day}', this.value)" class="w-full text-xs bg-white border border-sage-200 rounded-md px-2 py-1.5 text-stone-800 font-medium focus:ring-1 focus:ring-sage-500 focus:outline-none shadow-xs truncate cursor-pointer">
+                <select onchange="changeBreakfast('${day}', this.value)" class="w-full text-xs bg-white border ${isPast ? 'border-stone-300 text-stone-500' : 'border-sage-200 text-stone-800'} rounded-md px-2 py-1.5 font-medium focus:ring-1 focus:ring-sage-500 focus:outline-none shadow-xs truncate cursor-pointer">
                   ${breakfasts.map(b => `<option value="${b.id}" ${b.id === (breakfast ? breakfast.id : '') ? 'selected' : ''}>${b.title}</option>`).join('')}
                 </select>
               </div>
 
-              <div class="flex flex-wrap gap-1 pt-1 border-t border-sage-100/60">
-                ${breakfast && breakfast.tags ? breakfast.tags.map(t => `<span class="px-1.5 py-0.5 bg-white text-sage-700 rounded text-[9px] font-bold border border-sage-200/60 shadow-2xs">${t}</span>`).join('') : ''}
+              <div class="flex flex-wrap gap-1 pt-1 border-t ${isPast ? 'border-stone-300' : 'border-sage-100/60'}">
+                ${breakfast && breakfast.tags ? breakfast.tags.map(t => `<span class="px-1.5 py-0.5 bg-white ${isPast ? 'text-stone-500 border-stone-200' : 'text-sage-700 border-sage-200/60'} rounded text-[9px] font-bold border shadow-2xs">${t}</span>`).join('') : ''}
               </div>
             </div>
 
@@ -947,24 +985,25 @@
               ${dinner ? `
                 <div>
                   <div class="flex items-center justify-between mb-1">
-                    <span class="text-[10px] uppercase font-bold tracking-wider text-brand-600 flex items-center gap-1">
-                      <i class="fa-solid fa-moon text-indigo-400"></i> Dinner + Tomorrow's Lunch
+                    <span class="text-[10px] uppercase font-bold tracking-wider ${isPast ? 'text-stone-500' : 'text-brand-600'} flex items-center gap-1">
+                      <i class="fa-solid fa-moon ${isPast ? 'text-stone-400' : 'text-indigo-400'}"></i> Dinner + Tomorrow's Lunch
                     </span>
                     <div class="flex items-center gap-1.5">
-                      <span class="px-2 py-0.5 bg-stone-100 text-stone-600 rounded text-[10px] font-medium">${dinner.type || 'Dinner'}</span>
+                      <span class="px-2 py-0.5 ${isPast ? 'bg-stone-300/80 text-stone-600' : 'bg-stone-100 text-stone-600'} rounded text-[10px] font-medium">${dinner.type || 'Dinner'}</span>
                       <button onclick="openCookMode('${dinner.id}')" class="px-2 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded text-[10px] font-bold flex items-center gap-1 transition">
                         <i class="fa-solid fa-fire text-amber-500"></i> Cook Mode
                       </button>
                     </div>
                   </div>
-                  <h4 class="text-sm font-bold text-stone-900 mb-1">${dinner.title}</h4>
-                  <p class="text-xs text-stone-600 mb-2">${dinner.instructions || ''}</p>
+                  <h4 class="text-sm font-bold ${isPast ? 'text-stone-700' : 'text-stone-900'} mb-1">${dinner.title}</h4>
+                  <p class="text-xs ${isPast ? 'text-stone-500' : 'text-stone-600'} mb-2.5">${dinner.instructions || ''}</p>
                   
-                  <div class="bg-amber-50/70 border border-amber-200/60 rounded-md p-2 text-xs">
-                    <span class="font-bold text-amber-800 flex items-center gap-1 mb-0.5">
-                      <i class="fa-solid fa-spoon text-amber-600"></i> Baby Portion & Mash:
+                  <!-- Clean Standardized Baby Reminder Strip -->
+                  <div class="${isPast ? 'bg-stone-300/50 border-stone-300 text-stone-600' : 'bg-amber-50/80 border-amber-200/70 text-amber-900'} border rounded-lg px-2.5 py-1.5 text-xs flex items-center gap-2">
+                    <i class="fa-solid fa-spoon ${isPast ? 'text-stone-500' : 'text-amber-600'} text-xs"></i>
+                    <span class="text-[11px] leading-snug">
+                      <strong class="${isPast ? 'text-stone-700' : 'text-amber-950'} font-semibold">Baby Portion:</strong> ${STANDARD_BABY_REMINDER}
                     </span>
-                    <span class="text-amber-900 text-[11px]">${dinner.babyInstructions || 'Fork mash appropriate texture.'}</span>
                   </div>
                 </div>
               ` : `
@@ -1012,12 +1051,17 @@
         if (item) {
           const dinner = dinners.find(r => r.id === item.dinner);
           const breakfast = breakfasts.find(b => b.id === item.breakfast);
+
           if (dinner) {
             if (dinner.tags) dinner.tags.forEach(t => activeTags.add(t.trim()));
             if (dinner.allergens) dinner.allergens.forEach(a => activeTags.add(a.trim()));
+            const detected = detectNutritionFromIngredients(dinner.ingredients);
+            detected.forEach(tag => activeTags.add(tag));
           }
-          if (breakfast && breakfast.tags) {
-            breakfast.tags.forEach(t => activeTags.add(t.trim()));
+          if (breakfast) {
+            if (breakfast.tags) breakfast.tags.forEach(t => activeTags.add(t.trim()));
+            const detected = detectNutritionFromIngredients(breakfast.ingredients);
+            detected.forEach(tag => activeTags.add(tag));
           }
         }
       });
@@ -1059,7 +1103,46 @@
       saveState();
     }
 
-    // --- CONSOLIDATED GROCERY LIST (SMART CONTAINER LOGIC) ---
+    function setGroceryScope(scope) {
+      groceryScope = scope;
+      saveState();
+    }
+
+    function renderGroceryScopeButtons() {
+      const fullBtn = document.getElementById('scope-full-btn');
+      const restBtn = document.getElementById('scope-rest-btn');
+      const todayBtn = document.getElementById('scope-today-btn');
+
+      const activeClass = 'bg-white text-stone-900 shadow-xs';
+      const inactiveClass = 'text-stone-500 hover:text-stone-800';
+
+      fullBtn.className = `flex-1 py-1 px-2 rounded-md transition text-center ${groceryScope === 'full' ? activeClass : inactiveClass}`;
+      restBtn.className = `flex-1 py-1 px-2 rounded-md transition text-center ${groceryScope === 'rest' ? activeClass : inactiveClass}`;
+      todayBtn.className = `flex-1 py-1 px-2 rounded-md transition text-center ${groceryScope === 'today' ? activeClass : inactiveClass}`;
+
+      const summaryText = document.getElementById('grocery-summary-text');
+      const todayIdx = getTodayDayIndex();
+      const todayName = DAYS_OF_WEEK[todayIdx];
+
+      if (groceryScope === 'full') {
+        summaryText.innerText = "All 7 scheduled days";
+      } else if (groceryScope === 'rest') {
+        summaryText.innerText = `From ${todayName} through Sunday`;
+      } else {
+        summaryText.innerText = `Only today's meals (${todayName})`;
+      }
+    }
+
+    function getDaysForCurrentScope() {
+      const todayIdx = getTodayDayIndex();
+      if (groceryScope === 'today') {
+        return [DAYS_OF_WEEK[todayIdx]];
+      } else if (groceryScope === 'rest') {
+        return DAYS_OF_WEEK.slice(todayIdx);
+      }
+      return DAYS_OF_WEEK;
+    }
+
     function renderGroceryList() {
       const container = document.getElementById('grocery-list-container');
       const stashContainer = document.getElementById('pantry-stash-container');
@@ -1076,20 +1159,20 @@
         const isBulk = BULK_CONTAINER_UNITS.includes((ing.unit || '').toLowerCase());
 
         if (!categoryMap[cat][name]) {
-          // If it's a multi-use container (box/tub), cap the purchase amount at 1
           categoryMap[cat][name] = { 
             amount: isBulk ? 1 : ing.amount, 
             unit: ing.unit 
           };
         } else {
-          // Only add up amounts if it is NOT a multi-use container
           if (!isBulk && typeof ing.amount === 'number' && typeof categoryMap[cat][name].amount === 'number' && categoryMap[cat][name].unit === ing.unit) {
             categoryMap[cat][name].amount += ing.amount;
           }
         }
       }
 
-      DAYS_OF_WEEK.forEach(day => {
+      const activeDays = getDaysForCurrentScope();
+
+      activeDays.forEach(day => {
         const item = currentWeeklyPlan[day];
         if (item) {
           const dinner = dinners.find(r => r.id === item.dinner);
@@ -1103,7 +1186,7 @@
       const stockedItemsInPlan = [];
 
       if (categories.length === 0 && customGroceries.length === 0) {
-        container.innerHTML = `<p class="text-stone-400 italic text-center py-6">No meals scheduled yet.</p>`;
+        container.innerHTML = `<p class="text-stone-400 italic text-center py-6">No meals in selected range (${groceryScope}).</p>`;
         return;
       }
 
@@ -1146,7 +1229,7 @@
                 <span class="truncate ${isChecked ? 'line-through text-stone-300' : ''}">${item.displayLabel}</span>
               </label>
 
-              <button onclick="toggleStockedPantry('${item.name.replace(/'/g, "\\'")}')" class="text-stone-300 hover:text-indigo-600 text-xs px-1 opacity-60 group-hover:opacity-100 transition" title="Mark as 'Already have in pantry' (hide from store list)">
+              <button onclick="toggleStockedPantry('${item.name.replace(/'/g, "\\'")}')" class="text-stone-300 hover:text-indigo-600 text-xs px-1 opacity-60 group-hover:opacity-100 transition" title="Mark as 'Already have in pantry'">
                 <i class="fa-solid fa-box-archive"></i>
               </button>
             `;
@@ -1158,7 +1241,6 @@
         }
       });
 
-      // Custom items
       if (customGroceries.length > 0) {
         const customSection = document.createElement('div');
         customSection.className = 'space-y-1.5';
@@ -1187,7 +1269,6 @@
         container.appendChild(customSection);
       }
 
-      // Collapsible Stocked in Pantry
       if (stockedItemsInPlan.length > 0) {
         stashContainer.innerHTML = `
           <details class="group text-stone-500">
@@ -1281,7 +1362,7 @@
       } else {
         checkedGroceries.push(itemName);
       }
-      localStorage.setItem('family_checked_groceries_v7', JSON.stringify(checkedGroceries));
+      localStorage.setItem('family_checked_groceries_v10', JSON.stringify(checkedGroceries));
       renderGroceryList();
     }
 
@@ -1291,7 +1372,6 @@
 
       document.getElementById('cook-mode-title').innerText = dinner.title;
       document.getElementById('cook-mode-instructions').innerText = dinner.instructions || 'No specific cooking instructions provided.';
-      document.getElementById('cook-mode-baby').innerText = dinner.babyInstructions || 'Fork mash to desired texture.';
 
       const ingContainer = document.getElementById('cook-mode-ingredients');
       ingContainer.innerHTML = '';
@@ -1327,7 +1407,6 @@
       closeModal('cook-mode-modal');
     }
 
-    // Recipe Box Managers
     document.getElementById('open-dinner-box-btn').addEventListener('click', () => {
       const list = document.getElementById('dinner-box-list');
       list.innerHTML = '';
@@ -1371,7 +1450,6 @@
       document.getElementById('din-input-type').value = dinner.type || '';
       document.getElementById('din-input-tags').value = (dinner.tags || []).join(', ');
       document.getElementById('din-input-instructions').value = dinner.instructions || '';
-      document.getElementById('din-input-baby').value = dinner.babyInstructions || '';
 
       renderTagChips('dinner-tag-chips', 'din-input-tags');
 
@@ -1527,7 +1605,6 @@
       const type = document.getElementById('din-input-type').value.trim() || 'Dinner';
       const tags = document.getElementById('din-input-tags').value.split(',').map(t => t.trim()).filter(Boolean);
       const instructions = document.getElementById('din-input-instructions').value.trim();
-      const babyInstructions = document.getElementById('din-input-baby').value.trim();
 
       const ingredients = [];
       document.querySelectorAll('#dinner-ing-rows .ing-row').forEach(row => {
@@ -1549,7 +1626,6 @@
             tags,
             allergens: tags,
             instructions,
-            babyInstructions,
             ingredients
           };
         }
@@ -1561,7 +1637,6 @@
           tags,
           allergens: tags,
           instructions,
-          babyInstructions,
           ingredients
         });
       }
@@ -1625,7 +1700,7 @@
 
     document.getElementById('export-backup-btn').addEventListener('click', () => {
       const backupData = {
-        version: 7,
+        version: 10,
         exportDate: new Date().toISOString(),
         dinners,
         breakfasts,
@@ -1633,7 +1708,8 @@
         checkedGroceries,
         stockedPantryItems,
         clearedAllergens,
-        customGroceries
+        customGroceries,
+        groceryScope
       };
 
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
@@ -1660,6 +1736,7 @@
             stockedPantryItems = parsed.stockedPantryItems || [];
             clearedAllergens = parsed.clearedAllergens || ['Peanut'];
             customGroceries = parsed.customGroceries || [];
+            groceryScope = parsed.groceryScope || 'full';
             saveState();
             alert(`Backup restored successfully! Loaded ${dinners.length} dinners and ${breakfasts.length} breakfasts.`);
           } else {
@@ -1704,7 +1781,6 @@
       }
     });
 
-    // Formatted clipboard copy (Excludes items marked "Already in Pantry" and respects container caps)
     document.getElementById('copy-grocery-btn').addEventListener('click', () => {
       const categoryMap = {};
 
@@ -1728,7 +1804,9 @@
         }
       }
 
-      DAYS_OF_WEEK.forEach(day => {
+      const activeDays = getDaysForCurrentScope();
+
+      activeDays.forEach(day => {
         const item = currentWeeklyPlan[day];
         if (item) {
           const dinner = dinners.find(r => r.id === item.dinner);
@@ -1738,7 +1816,7 @@
         }
       });
 
-      let textOutput = `🛒 GROCERY SHOPPING LIST\n\n`;
+      let textOutput = `🛒 GROCERY SHOPPING LIST (${groceryScope.toUpperCase()})\n\n`;
 
       Object.keys(categoryMap).sort().forEach(cat => {
         const itemNames = Object.keys(categoryMap[cat]).sort();
@@ -1766,15 +1844,15 @@
         textOutput += `\n`;
       }
 
-      navigator.clipboard.writeText(textOutput).then(() => {
-        const btn = document.getElementById('copy-grocery-btn');
-        btn.innerHTML = '<i class="fa-solid fa-check text-emerald-500"></i>';
-        setTimeout(() => {
-          btn.innerHTML = '<i class="fa-regular fa-copy"></i>';
-        }, 1500);
-      });
+      document.execCommand('copy');
+      const btn = document.getElementById('copy-grocery-btn');
+      btn.innerHTML = '<i class="fa-solid fa-check text-emerald-500"></i>';
+      setTimeout(() => {
+        btn.innerHTML = '<i class="fa-regular fa-copy"></i>';
+      }, 1500);
     });
 
+    // Initial render call
     updateUI();
   </script>
 </body>
