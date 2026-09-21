@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weekly Family Meal & Baby Nutrition Planner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fdf8f6',
+              100: '#f2e8e5',
+              500: '#e07a5f',
+              600: '#d06448',
+              700: '#b85137',
+            },
+            sage: {
+              50: '#f4f6f4',
+              100: '#e3eae3',
+              500: '#819885',
+              600: '#67806c',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-stone-100 text-stone-800 font-sans min-h-screen pb-16">
+
+  <!-- Top Navigation / Header -->
+  <header class="bg-white border-b border-stone-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h1 class="text-xl font-bold text-stone-900 flex items-center gap-2">
+          <i class="fa-solid fa-utensils text-brand-500"></i> Family Meal & Baby Nutrition Planner
+        </h1>
+        <p class="text-xs text-stone-500">1-Pan Dinners • Next-Day Lunches • 7-Month Baby Iron & Allergen Tracking</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="autofill-btn" class="px-3 py-1.5 bg-sage-500 hover:bg-sage-600 text-white rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
+          <i class="fa-solid fa-shuffle"></i> Autofill 7 Days
+        </button>
+        <button id="clear-plan-btn" class="px-3 py-1.5 bg-stone-200 hover:bg-stone-300 text-stone-700 rounded-lg text-xs font-semibold transition">
+          Reset Week
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- Left Column: Weekly Schedule & Nutrition Tracker -->
+    <div class="lg:col-span-8 space-y-6">
+
+      <!-- Allergen & Iron Radar Card -->
+      <section class="bg-white rounded-xl p-4 border border-stone-200 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-stone-700 flex items-center gap-2">
+            <i class="fa-solid fa-shield-halved text-brand-500"></i> Weekly Baby Allergen & Iron Radar
+          </h2>
+          <span class="text-xs text-stone-500">Target: Regular exposure & bioavailable iron</span>
+        </div>
+        <div id="radar-container" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- 7-Day Planner Days -->
+      <section class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-bold text-stone-900">7-Day Meal Schedule</h2>
+          <span class="text-xs text-stone-500 italic">Dinner feeds adult lunch the next day</span>
+        </div>
+
+        <div id="days-container" class="space-y-3">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+    </div>
+
+    <!-- Right Column: Consolidated Grocery List -->
+    <div class="lg:col-span-4 space-y-6">
+      <section class="bg-white rounded-xl p-5 border border-stone-200 shadow-sm sticky top-20">
+        <div class="flex items-center justify-between border-b border-stone-200 pb-3 mb-4">
+          <div>
+            <h2 class="text-base font-bold text-stone-900 flex items-center gap-2">
+              <i class="fa-solid fa-basket-shopping text-brand-500"></i> Grocery List
+            </h2>
+            <p class="text-xs text-stone-500" id="grocery-summary-text">Auto-compiled from this week's meals</p>
+          </div>
+          <button id="copy-grocery-btn" class="p-2 text-stone-600 hover:text-brand-500 rounded-lg hover:bg-stone-100 transition" title="Copy checklist to clipboard">
+            <i class="fa-regular fa-copy"></i>
+          </button>
+        </div>
+
+        <!-- Add Custom Staple Bar -->
+        <div class="flex gap-1.5 mb-4">
+          <input id="custom-item-input" type="text" placeholder="Add extra staple (e.g. coffee, wipes)..." class="w-full text-xs rounded-lg border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none" />
+          <button id="add-custom-btn" class="px-3 py-2 bg-stone-800 hover:bg-stone-900 text-white rounded-lg text-xs font-semibold">
+            Add
+          </button>
+        </div>
+
+        <!-- Grocery Categories Container -->
+        <div id="grocery-list-container" class="space-y-4 max-h-[60vh] overflow-y-auto pr-1 text-xs">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <!-- Recipe Selection Modal -->
+  <div id="recipe-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-xl overflow-hidden">
+      <div class="p-4 border-b border-stone-200 flex justify-between items-center">
+        <div>
+          <h3 class="font-bold text-stone-900 text-base" id="modal-title">Select Recipe</h3>
+          <p class="text-xs text-stone-500">Choose from your 17 curated 1-pan dinners</p>
+        </div>
+        <button id="close-modal-btn" class="text-stone-400 hover:text-stone-700 text-lg p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div id="modal-recipe-list" class="p-4 overflow-y-auto divide-y divide-stone-100 space-y-1">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- MASTER DATABASE: 17 CURATED 1-PAN DINNERS ---
+    const DINNER_RECIPES = [
+      {
+        id: 'rec_1',
+        title: 'Sheet Pan Rosemary Chicken Thighs, Sweet Potatoes & Broccoli',
+        type: 'Sheet Pan',
+        tags: ['Chicken', 'High Iron', 'Vitamin C'],
+        ingredients: [
+          { name: 'Boneless chicken thighs', category: 'Meat & Poultry' },
+          { name: 'Sweet potatoes', category: 'Produce' },
+          { name: 'Broccoli crowns', category: 'Produce' },
+          { name: 'Olive oil', category: 'Pantry & Spices' },
+          { name: 'Dried rosemary & garlic powder', category: 'Pantry & Spices' }
+        ],
+        instructions: 'Toss diced sweet potatoes and broccoli florets with olive oil, garlic powder, and rosemary. Lay on baking sheet with chicken thighs. Roast at 400°F (200°C) for 25-30 mins until chicken is cooked through and sweet potatoes are soft.',
+        babyInstructions: 'Fork-mash roasted sweet potato with a tender broccoli floret and finely shred 1 tbsp chicken thigh (dark meat provides double the iron of breast meat).',
+        allergens: []
+      },
+      {
+        id: 'rec_2',
+        title: 'One-Skillet Ground Beef & Rice with Sweet Peas & Carrots',
+        type: 'One-Skillet',
+        tags: ['Beef', 'High Iron', 'Comfort'],
+        ingredients: [
+          { name: 'Lean ground beef', category: 'Meat & Poultry' },
+          { name: 'White or Jasmine rice', category: 'Pantry & Spices' },
+          { name: 'Frozen peas and carrots', category: 'Produce' },
+          { name: 'Low-sodium broth or water', category: 'Pantry & Spices' },
+          { name: 'Onion & garlic', category: 'Produce' }
+        ],
+        instructions: 'Brown ground beef with diced onion and garlic in a deep skillet. Stir in dry rice, frozen peas and carrots, and broth. Cover and simmer 15-18 mins until liquid is absorbed and rice is fluffy.',
+        babyInstructions: 'Scoop 2-3 tbsp before heavy salting. Fork-mash the soft ground beef, rice, and tender sweet peas with a splash of breast milk, formula, or warm water.',
+        allergens: []
+      },
+      {
+        id: 'rec_3',
+        title: 'Sheet Pan Tender Pork Tenderloin, Roasted Apples & Carrots',
+        type: 'Sheet Pan',
+        tags: ['Pork', 'Naturally Sweet', 'Fall Classic'],
+        ingredients: [
+          { name: 'Pork tenderloin', category: 'Meat & Poultry' },
+          { name: 'Carrots', category: 'Produce' },
+          { name: 'Sweet apples (Gala or Honeycrisp)', category: 'Produce' },
+          { name: 'Olive oil & thyme', category: 'Pantry & Spices' },
+          { name: 'Cinnamon', category: 'Pantry & Spices' }
+        ],
+        instructions: 'Slice carrots and apple wedges. Place on sheet pan around seasoned pork tenderloin. Drizzle with olive oil, thyme, and a pinch of cinnamon on the apples. Roast at 400°F for 20-25 mins until pork reaches 145°F.',
+        babyInstructions: 'Fork-mash roasted apple and carrot into a naturally sweet, silky puree. Pair with a small spoonful of finely shredded, tender pork.',
+        allergens: []
+      },
+      {
+        id: 'rec_4',
+        title: 'One-Skillet Mild Chicken & Black Bean Fajitas with Avocado',
+        type: 'One-Skillet',
+        tags: ['Chicken', 'Legumes', 'Healthy Fat'],
+        ingredients: [
+          { name: 'Chicken thighs (sliced)', category: 'Meat & Poultry' },
+          { name: 'Bell peppers (sliced)', category: 'Produce' },
+          { name: 'Yellow onion', category: 'Produce' },
+          { name: 'Canned black beans (no salt)', category: 'Pantry & Spices' },
+          { name: 'Ripe avocados', category: 'Produce' },
+          { name: 'Tortillas (adults)', category: 'Pantry & Spices' },
+          { name: 'Cumin & mild chili powder', category: 'Pantry & Spices' }
+        ],
+        instructions: 'Sauté sliced chicken, bell peppers, and onions in olive oil with cumin and mild chili powder until chicken is tender. Fold in drained black beans in the final 3 mins to warm.',
+        babyInstructions: 'Fork-mash rinsed black beans with a generous slice of ripe avocado and finely shredded chicken thigh. High in non-heme + heme iron and healthy brain fats.',
+        allergens: ['Legumes']
+      },
+      {
+        id: 'rec_5',
+        title: 'Sheet Pan Lemon-Herb Chicken Thighs, Yellow Potatoes & Green Beans',
+        type: 'Sheet Pan',
+        tags: ['Chicken', 'Classic', 'Mild'],
+        ingredients: [
+          { name: 'Boneless chicken thighs', category: 'Meat & Poultry' },
+          { name: 'Baby yellow potatoes', category: 'Produce' },
+          { name: 'Fresh green beans (trimmed)', category: 'Produce' },
+          { name: 'Lemon', category: 'Produce' },
+          { name: 'Olive oil & oregano', category: 'Pantry & Spices' }
+        ],
+        instructions: 'Halve yellow potatoes and toss with olive oil, lemon juice, and oregano on a sheet pan. Roast 15 mins. Add chicken thighs and green beans; roast another 20 mins until potatoes are tender and golden.',
+        babyInstructions: 'Mash soft yellow potato with tender green bean tips and finely shredded lemon chicken.',
+        allergens: []
+      },
+      {
+        id: 'rec_6',
+        title: 'Sheet Pan Chicken Sausages, Bell Peppers & Roasted Sweet Potatoes',
+        type: 'Sheet Pan',
+        tags: ['Poultry', 'Fast Prep'],
+        ingredients: [
+          { name: 'Mild cooked chicken sausages', category: 'Meat & Poultry' },
+          { name: 'Bell peppers (multi-color)', category: 'Produce' },
+          { name: 'Sweet potatoes (diced small)', category: 'Produce' },
+          { name: 'Olive oil & paprika', category: 'Pantry & Spices' }
+        ],
+        instructions: 'Toss diced sweet potatoes and bell peppers with olive oil and paprika. Roast 15 mins. Add sliced chicken sausage rounds and roast 12 mins until sausage is browned and potatoes are tender.',
+        babyInstructions: 'Sweet potatoes mash into an easy base. Remove skin from sausage, finely mince a small portion, and mix together.',
+        allergens: []
+      },
+      {
+        id: 'rec_7',
+        title: "One-Skillet Ground Chicken Shepherd's Pie Skillet",
+        type: 'One-Skillet',
+        tags: ['Chicken', 'Comfort', 'Soft Texture'],
+        ingredients: [
+          { name: 'Ground chicken or turkey', category: 'Meat & Poultry' },
+          { name: 'Frozen peas, corn & diced carrots', category: 'Produce' },
+          { name: 'Yellow potatoes (for quick mash)', category: 'Produce' },
+          { name: 'Garlic & mild thyme', category: 'Pantry & Spices' },
+          { name: 'Low-sodium broth', category: 'Pantry & Spices' }
+        ],
+        instructions: 'Brown ground chicken with garlic, thyme, and mixed veggies. Add a splash of broth to create a light gravy. Top skillet with warm mashed potatoes and broil 3 mins.',
+        babyInstructions: 'Scoop directly from skillet: soft ground poultry, peas, carrots, and mashed potato provide a complete, naturally soft meal.',
+        allergens: []
+      },
+      {
+        id: 'rec_8',
+        title: 'One-Pot Cheesy Ground Beef & Broccoli Macaroni',
+        type: 'One-Skillet',
+        tags: ['Beef', 'Dairy', 'Pasta'],
+        ingredients: [
+          { name: 'Lean ground beef', category: 'Meat & Poultry' },
+          { name: 'Macaroni or small shell pasta', category: 'Pantry & Spices' },
+          { name: 'Broccoli crowns (finely chopped)', category: 'Produce' },
+          { name: 'Cheddar cheese (shredded)', category: 'Dairy & Refrigerated' },
+          { name: 'Broth or water', category: 'Pantry & Spices' }
+        ],
+        instructions: 'Brown beef in skillet. Add dry macaroni, broth, and finely chopped broccoli. Cover and simmer 10 mins until pasta is soft. Turn off heat and stir in shredded cheddar cheese.',
+        babyInstructions: 'Scoop pasta, beef, and broccoli. Mince finely or fork-mash. Great exposure for mild melted dairy cheese.',
+        allergens: ['Dairy', 'Wheat']
+      },
+      {
+        id: 'rec_9',
+        title: 'Sheet Pan Greek Chicken Thighs, Roasted Zucchini & Baby Potatoes',
+        type: 'Sheet Pan',
+        tags: ['Chicken', 'Dairy', 'Mediterranean'],
+        ingredients: [
+          { name: 'Chicken thighs', category: 'Meat & Poultry' },
+          { name: 'Zucchini (sliced thick)', category: 'Produce' },
+          { name: 'Baby potatoes (halved)', category: 'Produce' },
+          { name: 'Plain Greek yogurt (for tzatziki/topping)', category: 'Dairy & Refrigerated' },
+          { name: 'Oregano & garlic', category: 'Pantry & Spices' }
+        ],
+        instructions: 'Roast potatoes, zucchini, and oregano-rubbed chicken on sheet pan at 400°F for 25 mins. Serve adults with tzatziki or plain Greek yogurt dollop.',
+        babyInstructions: 'Mash tender zucchini and roasted potato with a spoonful of cool, plain Greek yogurt and soft shredded chicken.',
+        allergens: ['Dairy']
+      },
+      {
+        id: 'rec_10',
+        title: 'One-Skillet Creamy Tomato Ground Turkey Pasta with Wilted Spinach',
+        type: 'One-Skillet',
+        tags: ['Turkey', 'Vitamin C', 'Iron'],
+        ingredients: [
+          { name: 'Lean ground turkey', category: 'Meat & Poultry' },
+          { name: 'Short pasta (rotini or penne)', category: 'Pantry & Spices' },
+          { name: 'Canned crushed tomatoes', category: 'Pantry & Spices' },
+          { name: 'Fresh baby spinach', category: 'Produce' },
+          { name: 'Cream or whole milk splash', category: 'Dairy & Refrigerated' },
+          { name: 'Italian herbs', category: 'Pantry & Spices' }
+        ],
+        instructions: 'Brown ground turkey with herbs. Pour in crushed tomatoes, broth, and dry pasta. Simmer covered until pasta is cooked. Stir in baby spinach to wilt and a splash of cream.',
+        babyInstructions: 'The crushed tomato sauce is packed with Vitamin C, maximizing iron absorption from the ground turkey. Mash together with soft pasta and tender spinach.',
+        allergens: ['Dairy', 'Wheat']
+      },
+      {
+        id: 'rec_11',
+        title: 'One-Skillet Beef & Broccoli Stir-Fry with Steamed Rice',
+        type: 'One-Skillet',
+        tags: ['Beef', 'Sesame', 'High Iron'],
+        ingredients: [
+          { name: 'Flank steak or ground beef', category: 'Meat & Poultry' },
+          { name: 'Broccoli florets', category: 'Produce' },
+          { name: 'Fresh ginger & garlic', category: 'Produce' },
+          { name: 'Toasted sesame oil', category: 'Pantry & Spices' },
+          { name: 'Low-sodium soy sauce (adults)', category: 'Pantry & Spices' },
+          { name: 'Cooked white or jasmine rice', category: 'Pantry & Spices' }
+        ],
+        instructions: 'Sauté beef with ginger and garlic in a drizzle of sesame oil. Steam broccoli florets directly in the skillet with 3 tbsp water until tender-crisp. Serve with warm rice.',
+        babyInstructions: 'Fork-mash very soft steamed broccoli and tender beef with warm rice and a drop of toasted sesame oil (introducing sesame allergen).',
+        allergens: ['Sesame']
+      },
+      {
+        id: 'rec_12',
+        title: 'Sheet Pan BBQ Chicken Thighs with Golden Baby Potatoes & Roasted Broccoli',
+        type: 'Sheet Pan',
+        tags: ['Chicken', 'Potatoes', 'Comfort'],
+        ingredients: [
+          { name: 'Chicken thighs', category: 'Meat & Poultry' },
+          { name: 'Baby golden potatoes', category: 'Produce' },
+          { name: 'Broccoli crowns', category: 'Produce' },
+          { name: 'Mild BBQ sauce (adults)', category: 'Pantry & Spices' },
+          { name: 'Olive oil & garlic powder', category: 'Pantry & Spices' }
+        ],
+        instructions: 'Toss halved potatoes and broccoli florets in olive oil and garlic. Arrange chicken thighs on sheet pan (brush adults with BBQ sauce). Bake at 400°F for 25-30 mins.',
+        babyInstructions: 'Baby gets plain roast chicken thigh (before BBQ sauce sugar) shredded and mashed with soft golden potato and broccoli.',
+        allergens: []
+      },
+      {
+        id: 'rec_13',
+        title: 'One-Skillet Cheesy Beef & Black Bean Taco Skillet',
+        type: 'One-Skillet',
+        tags: ['Beef', 'Legumes', 'Dairy'],
+        ingredients: [
+          { name: 'Lean ground beef', category: 'Meat & Poultry' },
+          { name: 'Canned black beans (rinsed)', category: 'Pantry & Spices' },
+          { name: 'Canned diced tomatoes with mild chilis', category: 'Pantry & Spices' },
+          { name: 'Cooked rice or frozen corn', category: 'Pantry & Spices' },
+          { name: 'Shredded cheddar or Monterey Jack', category: 'Dairy & Refrigerated' },
+          { name: 'Cumin & garlic', category: 'Pantry & Spices' }
+        ],
+        instructions: 'Brown beef with cumin and garlic. Stir in rinsed black beans, diced tomatoes, and corn/rice. Simmer 5 mins. Top with shredded cheese until melted.',
+        babyInstructions: 'Fork-mash tender beef and black beans with warm melted cheese and diced tomato. Dual iron source + calcium/dairy.',
+        allergens: ['Dairy', 'Legumes']
+      },
+      {
+        id: 'rec_14',
+        title: 'One-Skillet Ground Chicken or Turkey Fried Rice with Egg & Veggies',
+        type: 'One-Skillet',
+        tags: ['Chicken', 'Egg', 'Sesame'],
+        ingredients: [
+          { name: 'Ground chicken or turkey', category: 'Meat & Poultry' },
+          { name: 'Large eggs', category: 'Dairy & Refrigerated' },
+          { name: 'Frozen peas and diced carrots', category: 'Produce' },
+          { name: 'Pre-cooked white or jasmine rice', category: 'Pantry & Spices' },
+          { name: 'Toasted sesame oil & mild garlic', category: 'Pantry & Spices' }
+        ],
+        instructions: 'Brown ground poultry with garlic. Push to side, scramble 2 eggs into soft curds. Stir in cooked rice, peas, carrots, and sesame oil until piping hot.',
+        babyInstructions: 'Scoop 3 tbsp of the soft fried rice mix. Naturally provides whole cooked egg (allergen), sesame, and tender poultry in small, chewable bites.',
+        allergens: ['Egg', 'Sesame']
+      },
+      {
+        id: 'rec_15',
+        title: 'Sheet Pan Lemon-Garlic Chicken Thighs with Tender Asparagus & Potatoes',
+        type: 'Sheet Pan',
+        tags: ['Chicken', 'Spring Veg', 'Easy'],
+        ingredients: [
+          { name: 'Chicken thighs', category: 'Meat & Poultry' },
+          { name: 'Fresh asparagus (woody ends removed)', category: 'Produce' },
+          { name: 'Yellow potatoes (diced small)', category: 'Produce' },
+          { name: 'Lemon juice & olive oil', category: 'Pantry & Spices' },
+          { name: 'Garlic powder', category: 'Pantry & Spices' }
+        ],
+        instructions: 'Toss diced potatoes in oil and roast 15 mins. Add chicken thighs and asparagus spears. Roast another 15 mins until chicken is cooked and asparagus is tender.',
+        babyInstructions: 'Asparagus tips become tender enough to mash with the back of a fork. Blend with soft potato and finely shredded dark chicken meat.',
+        allergens: []
+      },
+      {
+        id: 'rec_16',
+        title: 'One-Skillet Beef or Turkey Sloppy Joes on Buns',
+        type: 'One-Skillet',
+        tags: ['Beef', 'Vitamin C', 'Ultra-Soft'],
+        ingredients: [
+          { name: 'Ground beef or ground turkey', category: 'Meat & Poultry' },
+          { name: 'Tomato paste & canned tomato sauce', category: 'Pantry & Spices' },
+          { name: 'Yellow onion & bell pepper (finely diced)', category: 'Produce' },
+          { name: 'Garlic powder & mild smoked paprika', category: 'Pantry & Spices' },
+          { name: 'Burger buns (adults)', category: 'Pantry & Spices' }
+        ],
+        instructions: 'Sauté onion and bell pepper until soft. Brown ground meat. Add tomato sauce, tomato paste, garlic, and paprika. Simmer 10 mins until thick and saucy. Serve on toasted buns.',
+        babyInstructions: 'The rich tomato-simmered meat sauce is naturally smooth and soft. Scoop 2-3 tbsp directly into baby bowl—Vitamin C in tomatoes maximizes the meat iron.',
+        allergens: ['Wheat']
+      },
+      {
+        id: 'rec_17',
+        title: 'Sheet Pan Chicken Thighs, Apples & Sweet Potatoes with Maple Glaze',
+        type: 'Sheet Pan',
+        tags: ['Chicken', 'Autumn', 'No Honey'],
+        ingredients: [
+          { name: 'Boneless chicken thighs', category: 'Meat & Poultry' },
+          { name: 'Sweet potatoes (cubed)', category: 'Produce' },
+          { name: 'Sweet apples (wedges)', category: 'Produce' },
+          { name: 'Pure maple syrup (1 tbsp)', category: 'Pantry & Spices' },
+          { name: 'Olive oil & pinch of cinnamon', category: 'Pantry & Spices' }
+        ],
+        instructions: 'Toss sweet potatoes, apple wedges, and chicken with olive oil, a drizzle of pure maple syrup (safe alternative to honey), and cinnamon. Roast at 400°F for 25-30 mins.',
+        babyInstructions: 'Apples and sweet potatoes bake to pure velvet. Fork-mash together with a spoonful of moist chicken thigh.',
+        allergens: []
+      }
+    ];
+
+    // --- BABY BREAKFAST ROTATIONS MATRIX (STREAMLINED FRUIT POUCHES) ---
+    const BABY_BREAKFASTS = [
+      {
+        id: 'bf_1',
+        title: 'Oat Cereal + Fruit Pouch + Peanut Butter',
+        tags: ['Peanut', 'High Iron'],
+        ingredients: [
+          { name: 'Infant oat cereal', category: 'Baby Staples & Pouches' },
+          { name: 'Fruit pouch of choice', category: 'Baby Staples & Pouches' },
+          { name: 'Smooth peanut butter (thinned)', category: 'Pantry & Spices' }
+        ]
+      },
+      {
+        id: 'bf_2',
+        title: 'Soft Scrambled Egg Yolk + Mashed Avocado',
+        tags: ['Egg', 'Healthy Fat'],
+        ingredients: [
+          { name: 'Eggs (scrambled soft)', category: 'Dairy & Refrigerated' },
+          { name: 'Ripe avocado', category: 'Produce' }
+        ]
+      },
+      {
+        id: 'bf_3',
+        title: 'Greek Yogurt + Fruit Pouch + Chia Seeds',
+        tags: ['Dairy', 'Healthy Fat'],
+        ingredients: [
+          { name: 'Plain whole-milk Greek yogurt', category: 'Dairy & Refrigerated' },
+          { name: 'Fruit pouch of choice', category: 'Baby Staples & Pouches' },
+          { name: 'Chia seeds', category: 'Pantry & Spices' }
+        ]
+      },
+      {
+        id: 'bf_4',
+        title: 'Mashed Banana + Almond Butter + Oat Cereal',
+        tags: ['Tree Nut', 'High Iron'],
+        ingredients: [
+          { name: 'Fresh bananas', category: 'Produce' },
+          { name: 'Almond butter (thinned)', category: 'Pantry & Spices' },
+          { name: 'Infant oat cereal', category: 'Baby Staples & Pouches' }
+        ]
+      },
+      {
+        id: 'bf_5',
+        title: 'Whole Scrambled Egg + Fruit Pouch',
+        tags: ['Egg', 'Vitamin C'],
+        ingredients: [
+          { name: 'Eggs', category: 'Dairy & Refrigerated' },
+          { name: 'Fruit pouch of choice', category: 'Baby Staples & Pouches' }
+        ]
+      },
+      {
+        id: 'bf_6',
+        title: 'Greek Yogurt + Fruit Pouch + Hemp Hearts',
+        tags: ['Dairy', 'Healthy Fat'],
+        ingredients: [
+          { name: 'Plain whole-milk Greek yogurt', category: 'Dairy & Refrigerated' },
+          { name: 'Fruit pouch of choice', category: 'Baby Staples & Pouches' },
+          { name: 'Hemp hearts', category: 'Pantry & Spices' }
+        ]
+      },
+      {
+        id: 'bf_7',
+        title: 'Warm Prune Oatmeal + Tahini Swirl (Fiber & Iron)',
+        tags: ['Sesame', 'High Iron'],
+        ingredients: [
+          { name: 'Infant oat cereal', category: 'Baby Staples & Pouches' },
+          { name: 'Prune puree pouch (for digestion/fiber)', category: 'Baby Staples & Pouches' },
+          { name: 'Tahini (sesame)', category: 'Pantry & Spices' }
+        ]
+      }
+    ];
+
+    const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    // State management with localStorage
+    let currentWeeklyPlan = JSON.parse(localStorage.getItem('family_weekly_plan_v2')) || {
+      Monday: { dinner: 'rec_1', breakfast: 'bf_1' },
+      Tuesday: { dinner: 'rec_2', breakfast: 'bf_2' },
+      Wednesday: { dinner: 'rec_4', breakfast: 'bf_3' },
+      Thursday: { dinner: 'rec_8', breakfast: 'bf_4' },
+      Friday: { dinner: 'rec_10', breakfast: 'bf_5' },
+      Saturday: { dinner: 'rec_14', breakfast: 'bf_6' },
+      Sunday: { dinner: 'rec_16', breakfast: 'bf_7' }
+    };
+
+    let checkedGroceries = JSON.parse(localStorage.getItem('family_checked_groceries_v2')) || [];
+    let customGroceries = JSON.parse(localStorage.getItem('family_custom_groceries_v2')) || [];
+    let activeDaySelecting = null;
+
+    // Save helpers
+    function savePlan() {
+      localStorage.setItem('family_weekly_plan_v2', JSON.stringify(currentWeeklyPlan));
+      renderPlanner();
+      renderRadar();
+      renderGroceryList();
+    }
+
+    function saveChecklist() {
+      localStorage.setItem('family_checked_groceries_v2', JSON.stringify(checkedGroceries));
+    }
+
+    function saveCustomGroceries() {
+      localStorage.setItem('family_custom_groceries_v2', JSON.stringify(customGroceries));
+      renderGroceryList();
+    }
+
+    // --- RENDER FUNCTIONS ---
+    function renderPlanner() {
+      const container = document.getElementById('days-container');
+      container.innerHTML = '';
+
+      DAYS_OF_WEEK.forEach((day) => {
+        const assignment = currentWeeklyPlan[day] || { dinner: null, breakfast: null };
+        const dinner = DINNER_RECIPES.find(r => r.id === assignment.dinner);
+        const breakfast = BABY_BREAKFASTS.find(b => b.id === assignment.breakfast);
+
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-xl border border-stone-200 overflow-hidden shadow-sm transition hover:border-stone-300';
+        
+        card.innerHTML = `
+          <div class="bg-stone-50/80 px-4 py-2 border-b border-stone-100 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-brand-500 text-white flex items-center justify-center text-xs font-bold">${day.substring(0, 2)}</span>
+              <h3 class="font-bold text-stone-900 text-sm">${day}</h3>
+            </div>
+            <button onclick="openRecipeModal('${day}')" class="text-xs text-brand-600 hover:text-brand-700 font-semibold flex items-center gap-1">
+              <i class="fa-solid fa-pen-to-square"></i> Change Dinner
+            </button>
+          </div>
+
+          <div class="p-4 grid grid-cols-1 md:grid-cols-12 gap-4">
+            <!-- Baby Breakfast Strip (Full width dropdown with clean margins) -->
+            <div class="md:col-span-4 bg-sage-50/70 rounded-lg p-3 border border-sage-100/80 flex flex-col justify-between gap-2.5">
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] uppercase font-bold tracking-wider text-sage-700 flex items-center gap-1">
+                    <i class="fa-solid fa-sun text-amber-500"></i> Baby Breakfast
+                  </span>
+                  <span class="text-[10px] text-sage-600 font-medium">Rotation</span>
+                </div>
+                
+                <select onchange="changeBreakfast('${day}', this.value)" class="w-full text-xs bg-white border border-sage-200 rounded-md px-2 py-1.5 text-stone-800 font-medium focus:ring-1 focus:ring-sage-500 focus:outline-none shadow-xs truncate cursor-pointer">
+                  ${BABY_BREAKFASTS.map(b => `<option value="${b.id}" ${b.id === (breakfast ? breakfast.id : '') ? 'selected' : ''}>${b.title}</option>`).join('')}
+                </select>
+              </div>
+
+              <div class="flex flex-wrap gap-1 pt-1 border-t border-sage-100/60">
+                ${breakfast ? breakfast.tags.map(t => `<span class="px-1.5 py-0.5 bg-white text-sage-700 rounded text-[9px] font-bold border border-sage-200/60 shadow-2xs">${t}</span>`).join('') : ''}
+              </div>
+            </div>
+
+            <!-- Family Dinner & Next Day Lunch -->
+            <div class="md:col-span-8 flex flex-col justify-between">
+              ${dinner ? `
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-[10px] uppercase font-bold tracking-wider text-brand-600 flex items-center gap-1">
+                      <i class="fa-solid fa-moon text-indigo-400"></i> Dinner + Tomorrow's Lunch
+                    </span>
+                    <span class="px-2 py-0.5 bg-stone-100 text-stone-600 rounded text-[10px] font-medium">${dinner.type}</span>
+                  </div>
+                  <h4 class="text-sm font-bold text-stone-900 mb-1">${dinner.title}</h4>
+                  <p class="text-xs text-stone-600 mb-2">${dinner.instructions}</p>
+                  
+                  <div class="bg-amber-50/70 border border-amber-200/60 rounded-md p-2 text-xs">
+                    <span class="font-bold text-amber-800 flex items-center gap-1 mb-0.5">
+                      <i class="fa-solid fa-spoon text-amber-600"></i> Baby Portion & Mash:
+                    </span>
+                    <span class="text-amber-900 text-[11px]">${dinner.babyInstructions}</span>
+                  </div>
+                </div>
+              ` : `
+                <div class="py-6 text-center">
+                  <p class="text-xs text-stone-400 mb-2">No dinner chosen for this day</p>
+                  <button onclick="openRecipeModal('${day}')" class="px-3 py-1.5 bg-brand-50 text-brand-600 rounded-lg text-xs font-semibold hover:bg-brand-100">
+                    + Select from 17 Dinners
+                  </button>
+                </div>
+              `}
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // --- BABY RADAR TRACKER ---
+    function renderRadar() {
+      const radarContainer = document.getElementById('radar-container');
+      radarContainer.innerHTML = '';
+
+      const targetAllergens = [
+        { key: 'Peanut', icon: 'fa-solid fa-seedling' },
+        { key: 'Tree Nut', icon: 'fa-solid fa-tree' },
+        { key: 'Egg', icon: 'fa-solid fa-egg' },
+        { key: 'Dairy', icon: 'fa-solid fa-cheese' },
+        { key: 'Sesame', icon: 'fa-solid fa-cookie' },
+        { key: 'Legumes', icon: 'fa-solid fa-bowl-rice' },
+        { key: 'Wheat', icon: 'fa-solid fa-bread-slice' },
+        { key: 'High Iron', icon: 'fa-solid fa-heart-pulse' }
+      ];
+
+      // Scan scheduled meals
+      const activeTags = new Set();
+      DAYS_OF_WEEK.forEach(day => {
+        const item = currentWeeklyPlan[day];
+        if (item) {
+          const dinner = DINNER_RECIPES.find(r => r.id === item.dinner);
+          const breakfast = BABY_BREAKFASTS.find(b => b.id === item.breakfast);
+          if (dinner) {
+            dinner.tags.forEach(t => activeTags.add(t));
+            dinner.allergens.forEach(a => activeTags.add(a));
+          }
+          if (breakfast) {
+            breakfast.tags.forEach(t => activeTags.add(t));
+          }
+        }
+      });
+
+      targetAllergens.forEach(allergen => {
+        const isPresent = activeTags.has(allergen.key);
+        const item = document.createElement('div');
+        item.className = `p-2 rounded-lg border flex items-center justify-between ${
+          isPresent ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-stone-50 border-stone-200 text-stone-400'
+        }`;
+        item.innerHTML = `
+          <span class="flex items-center gap-1.5 font-medium">
+            <i class="${allergen.icon}"></i> ${allergen.key}
+          </span>
+          <i class="fa-solid ${isPresent ? 'fa-circle-check text-emerald-600' : 'fa-circle text-stone-300'}"></i>
+        `;
+        radarContainer.appendChild(item);
+      });
+    }
+
+    // --- CONSOLIDATED GROCERY LIST ---
+    function renderGroceryList() {
+      const container = document.getElementById('grocery-list-container');
+      container.innerHTML = '';
+
+      const categoryMap = {};
+
+      function addIng(name, category) {
+        if (!categoryMap[category]) categoryMap[category] = new Set();
+        categoryMap[category].add(name);
+      }
+
+      DAYS_OF_WEEK.forEach(day => {
+        const item = currentWeeklyPlan[day];
+        if (item) {
+          const dinner = DINNER_RECIPES.find(r => r.id === item.dinner);
+          const breakfast = BABY_BREAKFASTS.find(b => b.id === item.breakfast);
+          if (dinner) dinner.ingredients.forEach(i => addIng(i.name, i.category));
+          if (breakfast) breakfast.ingredients.forEach(i => addIng(i.name, i.category));
+        }
+      });
+
+      if (customGroceries.length > 0) {
+        categoryMap['Custom & Pantry Staples'] = new Set(customGroceries);
+      }
+
+      const categories = Object.keys(categoryMap).sort();
+
+      if (categories.length === 0) {
+        container.innerHTML = `<p class="text-stone-400 italic text-center py-6">No meals scheduled yet.</p>`;
+        return;
+      }
+
+      categories.forEach(cat => {
+        const section = document.createElement('div');
+        section.className = 'space-y-1.5';
+        section.innerHTML = `<h4 class="font-bold text-[11px] text-stone-500 uppercase tracking-wider border-b border-stone-100 pb-0.5">${cat}</h4>`;
+
+        const list = document.createElement('div');
+        list.className = 'space-y-1';
+
+        categoryMap[cat].forEach(ing => {
+          const isChecked = checkedGroceries.includes(ing);
+          const row = document.createElement('label');
+          row.className = 'flex items-center gap-2 text-stone-700 hover:text-stone-900 cursor-pointer select-none';
+          row.innerHTML = `
+            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleGroceryCheck('${ing.replace(/'/g, "\\'")}')" class="rounded text-brand-500 focus:ring-0 cursor-pointer h-3.5 w-3.5" />
+            <span class="${isChecked ? 'line-through text-stone-300' : ''}">${ing}</span>
+          `;
+          list.appendChild(row);
+        });
+
+        section.appendChild(list);
+        container.appendChild(section);
+      });
+    }
+
+    // Modal logic
+    function openRecipeModal(day) {
+      activeDaySelecting = day;
+      document.getElementById('modal-title').innerText = `Select Dinner for ${day}`;
+      const list = document.getElementById('modal-recipe-list');
+      list.innerHTML = '';
+
+      DINNER_RECIPES.forEach(rec => {
+        const isCurrent = currentWeeklyPlan[day]?.dinner === rec.id;
+        const btn = document.createElement('button');
+        btn.className = `w-full text-left p-3 rounded-xl transition flex items-start justify-between gap-3 ${
+          isCurrent ? 'bg-brand-50 border border-brand-200' : 'hover:bg-stone-50'
+        }`;
+        btn.onclick = () => selectRecipeForDay(rec.id);
+
+        btn.innerHTML = `
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-xs font-bold text-stone-900">${rec.title}</span>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-stone-100 text-stone-600">${rec.type}</span>
+            </div>
+            <p class="text-[11px] text-stone-500 line-clamp-2">${rec.instructions}</p>
+          </div>
+          ${isCurrent ? '<i class="fa-solid fa-check text-brand-500 text-sm mt-1"></i>' : ''}
+        `;
+        list.appendChild(btn);
+      });
+
+      document.getElementById('recipe-modal').classList.remove('hidden');
+    }
+
+    function selectRecipeForDay(recipeId) {
+      if (activeDaySelecting) {
+        if (!currentWeeklyPlan[activeDaySelecting]) currentWeeklyPlan[activeDaySelecting] = {};
+        currentWeeklyPlan[activeDaySelecting].dinner = recipeId;
+        savePlan();
+        document.getElementById('recipe-modal').classList.add('hidden');
+      }
+    }
+
+    function changeBreakfast(day, breakfastId) {
+      if (!currentWeeklyPlan[day]) currentWeeklyPlan[day] = {};
+      currentWeeklyPlan[day].breakfast = breakfastId;
+      savePlan();
+    }
+
+    function toggleGroceryCheck(itemName) {
+      if (checkedGroceries.includes(itemName)) {
+        checkedGroceries = checkedGroceries.filter(i => i !== itemName);
+      } else {
+        checkedGroceries.push(itemName);
+      }
+      saveChecklist();
+      renderGroceryList();
+    }
+
+    // Autofill & Controls
+    document.getElementById('autofill-btn').addEventListener('click', () => {
+      const shuffled = [...DINNER_RECIPES].sort(() => 0.5 - Math.random());
+      DAYS_OF_WEEK.forEach((day, idx) => {
+        currentWeeklyPlan[day] = {
+          dinner: shuffled[idx].id,
+          breakfast: BABY_BREAKFASTS[idx % BABY_BREAKFASTS.length].id
+        };
+      });
+      checkedGroceries = [];
+      saveChecklist();
+      savePlan();
+    });
+
+    document.getElementById('clear-plan-btn').addEventListener('click', () => {
+      DAYS_OF_WEEK.forEach(day => {
+        currentWeeklyPlan[day] = { dinner: null, breakfast: 'bf_1' };
+      });
+      checkedGroceries = [];
+      saveChecklist();
+      savePlan();
+    });
+
+    document.getElementById('close-modal-btn').addEventListener('click', () => {
+      document.getElementById('recipe-modal').classList.add('hidden');
+    });
+
+    document.getElementById('add-custom-btn').addEventListener('click', () => {
+      const input = document.getElementById('custom-item-input');
+      const val = input.value.trim();
+      if (val) {
+        customGroceries.push(val);
+        input.value = '';
+        saveCustomGroceries();
+      }
+    });
+
+    document.getElementById('copy-grocery-btn').addEventListener('click', () => {
+      const categoryMap = {};
+      DAYS_OF_WEEK.forEach(day => {
+        const item = currentWeeklyPlan[day];
+        if (item) {
+          const dinner = DINNER_RECIPES.find(r => r.id === item.dinner);
+          const breakfast = BABY_BREAKFASTS.find(b => b.id === item.breakfast);
+          if (dinner) dinner.ingredients.forEach(i => {
+            if (!categoryMap[i.category]) categoryMap[i.category] = new Set();
+            categoryMap[i.category].add(i.name);
+          });
+          if (breakfast) breakfast.ingredients.forEach(i => {
+            if (!categoryMap[i.category]) categoryMap[i.category] = new Set();
+            categoryMap[i.category].add(i.name);
+          });
+        }
+      });
+
+      let textOutput = `🛒 WEEKLY GROCERY LIST\n\n`;
+      Object.keys(categoryMap).forEach(cat => {
+        textOutput += `[ ${cat.toUpperCase()} ]\n`;
+        categoryMap[cat].forEach(item => {
+          const isDone = checkedGroceries.includes(item) ? '✓ ' : '□ ';
+          textOutput += `${isDone} ${item}\n`;
+        });
+        textOutput += `\n`;
+      });
+
+      navigator.clipboard.writeText(textOutput).then(() => {
+        const btn = document.getElementById('copy-grocery-btn');
+        btn.innerHTML = '<i class="fa-solid fa-check text-emerald-500"></i>';
+        setTimeout(() => {
+          btn.innerHTML = '<i class="fa-regular fa-copy"></i>';
+        }, 1500);
+      });
+    });
+
+    // Close modal on background click
+    document.getElementById('recipe-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'recipe-modal') {
+        document.getElementById('recipe-modal').classList.add('hidden');
+      }
+    });
+
+    // Initial render
+    renderPlanner();
+    renderRadar();
+    renderGroceryList();
+  </script>
+</body>
+</html>
