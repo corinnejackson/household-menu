@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#e07a5f"/>
+  <circle cx="256" cy="268" r="150" fill="none" stroke="#fdf8f6" stroke-width="22" opacity="0.55"/>
+  <g fill="#ffffff">
+    <!-- fork -->
+    <rect x="166" y="120" width="14" height="92" rx="7"/>
+    <rect x="196" y="120" width="14" height="92" rx="7"/>
+    <rect x="226" y="120" width="14" height="92" rx="7"/>
+    <path d="M166 200 h74 v14 a37 37 0 0 1 -23 34 v140 a14 14 0 0 1 -28 0 v-140 a37 37 0 0 1 -23 -34 z"/>
+    <!-- knife -->
+    <path d="M318 120 c34 18 44 74 38 132 h-24 v136 a14 14 0 0 1 -28 0 v-254 a14 14 0 0 1 14 -14 z"/>
+  </g>
+</svg>

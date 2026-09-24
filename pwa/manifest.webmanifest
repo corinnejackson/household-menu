@@ -1,0 +1,15 @@
+{
+  "name": "Family Meal & Baby Nutrition Planner",
+  "short_name": "Meal Planner",
+  "description": "Weekly family dinners, baby breakfasts, allergen tracking and a shared grocery list.",
+  "start_url": "../",
+  "scope": "../",
+  "display": "standalone",
+  "background_color": "#f5f5f4",
+  "theme_color": "#e07a5f",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
