@@ -4,26 +4,56 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Weekly Family Meal & Baby Nutrition Planner</title>
+  <meta name="theme-color" content="#e07a5f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Meal Planner" />
+  <link rel="icon" href="pwa/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="pwa/apple-touch-icon.png" />
+  <link rel="manifest" href="pwa/manifest.webmanifest" />
+  <style>
+    /* Theme colours as "r g b" triplets so Tailwind opacity modifiers (bg-brand-50/70) keep working */
+    :root {
+      --brand-50: 253 248 246; --brand-100: 242 232 229; --brand-200: 240 196 184; --brand-300: 233 164 146;
+      --brand-400: 227 139 115; --brand-500: 224 122 95; --brand-600: 208 100 72; --brand-700: 184 81 55;
+      --sage-50: 244 246 244; --sage-100: 227 234 227; --sage-200: 200 212 202; --sage-300: 170 187 173;
+      --sage-400: 148 167 151; --sage-500: 129 152 133; --sage-600: 103 128 108; --sage-700: 83 104 88;
+    }
+    @media print {
+      @page { margin: 12mm; }
+      body { background: #fff !important; padding-bottom: 0 !important; }
+      .print-hide, header, #toast { display: none !important; }
+      main { display: block !important; max-width: none !important; padding: 0 !important; }
+      body.print-week #grocery-column, body.print-grocery #planner-column { display: none !important; }
+      body.print-week #planner-column > section:not(#schedule-section) { display: none !important; }
+      .print-card, #grocery-panel { box-shadow: none !important; break-inside: avoid; position: static !important; }
+      #grocery-list-container { max-height: none !important; overflow: visible !important; }
+      #days-container > div { opacity: 1 !important; break-inside: avoid; }
+    }
+  </style>
+  <script>
+    // Apply the saved per-device colour theme before first paint to avoid a flash of the default colours
+    try {
+      const savedTheme = JSON.parse(localStorage.getItem('planner_theme_v1') || 'null');
+      if (savedTheme && savedTheme.vars) {
+        Object.entries(savedTheme.vars).forEach(([k, v]) => document.documentElement.style.setProperty(k, v));
+      }
+    } catch (e) {}
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <script>
+    const themeShades = (name, shades) => Object.fromEntries(shades.map(s => [s, `rgb(var(--${name}-${s}) / <alpha-value>)`]));
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            brand: {
-              50: '#fdf8f6',
-              100: '#f2e8e5',
-              500: '#e07a5f',
-              600: '#d06448',
-              700: '#b85137',
-            },
-            sage: {
-              50: '#f4f6f4',
-              100: '#e3eae3',
-              500: '#819885',
-              600: '#67806c',
-            }
+            brand: themeShades('brand', [50, 100, 200, 300, 400, 500, 600, 700]),
+            sage: themeShades('sage', [50, 100, 200, 300, 400, 500, 600, 700])
+          },
+          boxShadow: {
+            '2xs': '0 1px rgb(0 0 0 / 0.05)',
+            'xs': '0 1px 2px 0 rgb(0 0 0 / 0.05)'
           }
         }
       }
@@ -44,7 +74,7 @@
   </datalist>
 
   <!-- Top Navigation Header -->
-  <header class="bg-white border-b border-stone-200 sticky top-0 z-30 shadow-sm">
+  <header class="bg-white border-b border-stone-200 sm:sticky sm:top-0 z-30 shadow-sm">
     <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
       <div>
         <div class="flex items-center gap-2 flex-wrap">
@@ -70,20 +100,26 @@
           <i class="fa-solid fa-sun text-amber-500"></i> Breakfasts (<span id="breakfast-count-badge">0</span>)
         </button>
 
-        <button id="export-backup-btn" class="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-xs font-semibold transition flex items-center gap-1" title="Download backup file">
-          <i class="fa-solid fa-download"></i> Backup
+        <button onclick="openHistoryModal()" class="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-xs font-semibold transition flex items-center gap-1.5" title="Saved plans, history, and backup files">
+          <i class="fa-solid fa-clock-rotate-left text-brand-500"></i> History
         </button>
-        <label class="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-xs font-semibold transition flex items-center gap-1 cursor-pointer" title="Restore from backup file">
-          <i class="fa-solid fa-upload"></i> Restore
-          <input type="file" id="import-backup-input" accept=".json" class="hidden" />
-        </label>
+        <button onclick="openThemeModal()" class="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-xs font-semibold transition flex items-center gap-1.5" title="Pick colours">
+          <i class="fa-solid fa-palette text-brand-500"></i> Colours
+        </button>
 
         <button id="autofill-btn" class="px-3 py-1.5 bg-sage-500 hover:bg-sage-600 text-white rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
           <i class="fa-solid fa-shuffle"></i> Autofill
         </button>
-        <button id="clear-plan-btn" class="px-2.5 py-1.5 bg-stone-200 hover:bg-stone-300 text-stone-700 rounded-lg text-xs font-semibold transition">
+        <button id="clear-plan-btn" class="px-2.5 py-1.5 bg-stone-200 hover:bg-stone-300 text-stone-700 rounded-lg text-xs font-semibold transition" title="Clear this week's dinners and grocery checks (you can undo)">
           Reset Week
         </button>
+
+        <span id="sync-status" class="hidden px-2 py-1 rounded-full text-[10px] font-bold border items-center gap-1"></span>
+        <form id="logout-form" method="post" action="/logout" class="hidden">
+          <button type="submit" class="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100 transition" title="Sign out">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </form>
       </div>
     </div>
   </header>
@@ -92,18 +128,18 @@
   <main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
     <!-- Left Column: Age Banner, Allergen Radar & Schedule -->
-    <div class="lg:col-span-8 space-y-5">
+    <div id="planner-column" class="lg:col-span-8 space-y-5">
 
       <!-- Dynamic Stage Feeding Guidance Banner -->
-      <section id="stage-banner-card" class="bg-amber-50/90 border border-amber-200/90 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div class="flex items-start gap-3">
+      <section id="stage-banner-card" class="bg-amber-50/90 border border-amber-200/90 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:flex-wrap items-start justify-between gap-3">
+        <div class="flex items-start gap-3 min-w-0 sm:flex-1 sm:basis-0">
           <div class="w-10 h-10 rounded-xl bg-amber-200/80 text-amber-800 flex items-center justify-center text-lg shrink-0 mt-0.5">
             <i class="fa-solid fa-baby-carriage"></i>
           </div>
           <div>
             <div class="flex items-center gap-2 flex-wrap">
               <span id="banner-stage-title" class="font-bold text-sm text-amber-950">Stage 1: 6–7 Months (Silky Purees & Smooth Mashes)</span>
-              <span id="banner-age-calc" class="text-[10px] font-semibold bg-amber-200/70 text-amber-900 px-2 py-0.2 rounded-full">Age ~ 7 mo</span>
+              <span id="banner-age-calc" class="text-[10px] font-semibold bg-amber-200/70 text-amber-900 px-2 py-px rounded-full">Age ~ 7 mo</span>
             </div>
             <p id="banner-stage-desc" class="text-xs text-amber-900/90 mt-1 leading-relaxed">
               Texture: Silky smooth fork-mash thinned with milk/formula/water. Priority on iron-rich single proteins & safe allergen introduction.
@@ -113,11 +149,18 @@
         <button onclick="openBabyStageModal()" class="px-2.5 py-1.5 bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold shrink-0 transition flex items-center gap-1">
           <i class="fa-solid fa-sliders"></i> Stage Settings
         </button>
+        <details id="stage-guide" class="group w-full basis-full -mt-1 sm:pl-[3.25rem]">
+          <summary class="cursor-pointer select-none text-[11px] font-bold text-amber-900 hover:text-amber-950 inline-flex items-center gap-1">
+            <i class="fa-solid fa-book-open"></i> <span id="stage-guide-summary">Full stage guide</span>
+            <i class="fa-solid fa-chevron-down text-[9px] group-open:rotate-180 transition"></i>
+          </summary>
+          <div id="stage-guide-body" class="mt-2 space-y-3 text-[11px] text-amber-950/90 leading-relaxed"></div>
+        </details>
       </section>
 
       <!-- Allergen & Nutrition Radar Tracker -->
-      <section class="bg-white rounded-xl p-4 border border-stone-200 shadow-sm">
-        <div class="flex items-center justify-between mb-2">
+      <section class="bg-white rounded-xl p-4 border border-stone-200 shadow-sm print-card">
+        <div class="flex items-start justify-between gap-2 mb-2">
           <div>
             <h2 class="text-sm font-bold uppercase tracking-wider text-stone-700 flex items-center gap-2">
               <i class="fa-solid fa-shield-halved text-brand-500"></i> Baby Allergen & Nutrition Radar
@@ -134,11 +177,27 @@
       </section>
 
       <!-- 7-Day Planner Days -->
-      <section class="space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 class="text-lg font-bold text-stone-900">7-Day Meal Schedule</h2>
-          <span class="text-xs text-stone-500 italic">Past days shaded • Today highlighted</span>
+      <section id="schedule-section" class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 class="text-lg font-bold text-stone-900">7-Day Meal Schedule</h2>
+            <p id="week-range-label" class="text-xs text-stone-500"></p>
+          </div>
+          <div class="flex items-center gap-1.5 print-hide">
+            <button onclick="shiftViewedWeek(-1)" class="w-8 h-8 rounded-lg bg-white border border-stone-200 hover:border-brand-300 hover:text-brand-600 text-stone-600 transition" title="Previous week">
+              <i class="fa-solid fa-chevron-left text-xs"></i>
+            </button>
+            <button id="week-title-btn" onclick="goToCurrentWeek()" class="px-3 h-8 rounded-lg bg-white border border-stone-200 text-xs font-bold text-stone-800 min-w-[7.5rem] hover:border-brand-300 transition" title="Jump to this week">This Week</button>
+            <button onclick="shiftViewedWeek(1)" class="w-8 h-8 rounded-lg bg-white border border-stone-200 hover:border-brand-300 hover:text-brand-600 text-stone-600 transition" title="Next week">
+              <i class="fa-solid fa-chevron-right text-xs"></i>
+            </button>
+            <button onclick="printSection('week')" class="w-8 h-8 rounded-lg bg-white border border-stone-200 hover:border-brand-300 hover:text-brand-600 text-stone-600 transition" title="Print this week's plan">
+              <i class="fa-solid fa-print text-xs"></i>
+            </button>
+          </div>
         </div>
+
+        <div id="week-empty-card" class="hidden print-hide"></div>
 
         <div id="days-container" class="space-y-3">
           <!-- Rendered via JS -->
@@ -147,8 +206,8 @@
     </div>
 
     <!-- Right Column: Consolidated Grocery List with Scope Filters -->
-    <div class="lg:col-span-4 space-y-6">
-      <section class="bg-white rounded-xl p-5 border border-stone-200 shadow-sm sticky top-20">
+    <div id="grocery-column" class="lg:col-span-4 space-y-6">
+      <section id="grocery-panel" class="bg-white rounded-xl p-5 border border-stone-200 shadow-sm sticky top-20">
         <div class="flex items-center justify-between border-b border-stone-200 pb-3 mb-3">
           <div>
             <h2 class="text-base font-bold text-stone-900 flex items-center gap-2">
@@ -156,13 +215,18 @@
             </h2>
             <p class="text-xs text-stone-500" id="grocery-summary-text">Auto-summed with container caps</p>
           </div>
-          <button id="copy-grocery-btn" class="p-2 text-stone-600 hover:text-brand-500 rounded-lg hover:bg-stone-100 transition" title="Copy needed items to clipboard">
-            <i class="fa-regular fa-copy"></i>
-          </button>
+          <div class="flex items-center print-hide">
+            <button onclick="printSection('grocery')" class="p-2 text-stone-600 hover:text-brand-500 rounded-lg hover:bg-stone-100 transition" title="Print grocery list">
+              <i class="fa-solid fa-print"></i>
+            </button>
+            <button id="copy-grocery-btn" class="p-2 text-stone-600 hover:text-brand-500 rounded-lg hover:bg-stone-100 transition" title="Copy needed items to clipboard">
+              <i class="fa-regular fa-copy"></i>
+            </button>
+          </div>
         </div>
 
         <!-- Scope Filter Tabs -->
-        <div class="bg-stone-100 p-1 rounded-lg flex gap-1 mb-4 text-[11px] font-semibold">
+        <div id="grocery-scope-tabs" class="bg-stone-100 p-1 rounded-lg flex gap-1 mb-4 text-[11px] font-semibold print-hide">
           <button id="scope-full-btn" onclick="setGroceryScope('full')" class="flex-1 py-1 px-2 rounded-md transition text-center shadow-xs bg-white text-stone-800">
             Full Week
           </button>
@@ -175,7 +239,7 @@
         </div>
 
         <!-- Custom Item Input -->
-        <div class="flex gap-1.5 mb-4">
+        <div class="flex gap-1.5 mb-4 print-hide">
           <input id="custom-item-input" type="text" placeholder="Add extra staple (e.g. 1 bag coffee)..." class="w-full text-xs rounded-lg border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none" />
           <button id="add-custom-btn" class="px-3 py-2 bg-stone-800 hover:bg-stone-900 text-white rounded-lg text-xs font-semibold">
             Add
@@ -324,8 +388,110 @@
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
+      <div class="px-4 pt-3 pb-2 border-b border-stone-100 space-y-2">
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-xs"></i>
+          <input id="recipe-search-input" type="search" oninput="renderRecipePicker()" placeholder="Search by name, ingredient, or tag..." class="w-full text-xs rounded-lg border border-stone-300 pl-8 pr-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none" />
+        </div>
+        <div id="recipe-filter-chips" class="flex flex-wrap gap-1"></div>
+      </div>
       <div id="modal-recipe-list" class="p-4 overflow-y-auto divide-y divide-stone-100 space-y-1"></div>
     </div>
+  </div>
+
+  <!-- History, Saved Plans & Backup Modal -->
+  <div id="history-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[88vh] flex flex-col shadow-xl overflow-hidden">
+      <div class="p-4 border-b border-stone-200 flex justify-between items-center">
+        <div>
+          <h3 class="font-bold text-stone-900 text-base flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-brand-500"></i> History & Saved Plans</h3>
+          <p class="text-xs text-stone-500">Reuse a saved week, roll back a mistake, or keep a backup file</p>
+        </div>
+        <button onclick="closeModal('history-modal')" class="text-stone-400 hover:text-stone-700 text-lg p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="p-4 overflow-y-auto space-y-5 text-xs">
+        <section id="history-server-section" class="space-y-5">
+          <div>
+            <h4 class="font-bold text-[11px] uppercase tracking-wider text-stone-500 mb-2">Save the week you're viewing</h4>
+            <form id="save-plan-form" class="flex gap-1.5">
+              <input id="save-plan-name" type="text" maxlength="120" required placeholder="Name it, e.g. Cozy fall week" class="w-full text-xs rounded-lg border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none" />
+              <button type="submit" class="px-3 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg font-semibold whitespace-nowrap flex items-center gap-1.5">
+                <i class="fa-solid fa-bookmark"></i> Save
+              </button>
+            </form>
+          </div>
+          <div>
+            <h4 class="font-bold text-[11px] uppercase tracking-wider text-stone-500 mb-1">Saved plans</h4>
+            <p class="text-[11px] text-stone-400 mb-2">Loading a saved plan fills the week you're viewing. Recipes stay as they are.</p>
+            <div id="saved-plans-list" class="space-y-2"></div>
+          </div>
+          <div>
+            <h4 class="font-bold text-[11px] uppercase tracking-wider text-stone-500 mb-1">Automatic history</h4>
+            <p class="text-[11px] text-stone-400 mb-2">Taken before resets, autofills, restores and deletions, and at the start of each editing session. Restoring rolls everything back to that moment (you can undo it).</p>
+            <div id="history-list" class="space-y-2"></div>
+          </div>
+        </section>
+        <p id="history-local-note" class="hidden p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900">
+          Saved plans and automatic history are available on the signed-in planner site. This copy only stores data in this browser.
+        </p>
+        <div>
+          <h4 class="font-bold text-[11px] uppercase tracking-wider text-stone-500 mb-2">Backup file</h4>
+          <div class="flex flex-wrap gap-2">
+            <button id="export-backup-btn" class="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg font-semibold flex items-center gap-1.5">
+              <i class="fa-solid fa-download"></i> Download backup
+            </button>
+            <label class="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg font-semibold flex items-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-upload"></i> Restore from file
+              <input type="file" id="import-backup-input" accept=".json" class="hidden" />
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Colour Theme Modal -->
+  <div id="theme-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full max-h-[88vh] flex flex-col shadow-xl overflow-hidden">
+      <div class="p-4 border-b border-stone-200 flex justify-between items-center">
+        <div>
+          <h3 class="font-bold text-stone-900 text-base flex items-center gap-2"><i class="fa-solid fa-palette text-brand-500"></i> Colours</h3>
+          <p class="text-xs text-stone-500">Changes apply instantly and only on this device</p>
+        </div>
+        <button onclick="closeModal('theme-modal')" class="text-stone-400 hover:text-stone-700 text-lg p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="p-4 overflow-y-auto space-y-5 text-xs">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-bold text-stone-800">Accent <span class="font-normal text-stone-400">(icons, buttons, today)</span></h4>
+            <label class="flex items-center gap-1.5 text-stone-500 cursor-pointer">Custom <input type="color" id="brand-color-input" oninput="setThemeColor('brand', this.value)" class="w-7 h-7 rounded cursor-pointer border border-stone-200 p-0" /></label>
+          </div>
+          <div id="brand-swatches" class="flex flex-wrap gap-2"></div>
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-bold text-stone-800">Secondary <span class="font-normal text-stone-400">(breakfasts, Autofill)</span></h4>
+            <label class="flex items-center gap-1.5 text-stone-500 cursor-pointer">Custom <input type="color" id="sage-color-input" oninput="setThemeColor('sage', this.value)" class="w-7 h-7 rounded cursor-pointer border border-stone-200 p-0" /></label>
+          </div>
+          <div id="sage-swatches" class="flex flex-wrap gap-2"></div>
+        </div>
+        <div class="flex items-center justify-between pt-3 border-t border-stone-100">
+          <button onclick="resetTheme()" class="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg font-semibold">Reset to default</button>
+          <button onclick="closeModal('theme-modal')" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg font-bold">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast (undo and status messages) -->
+  <div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] bg-stone-900 text-white text-xs rounded-xl shadow-2xl pl-4 pr-2 py-2 flex items-center gap-3 max-w-[92vw]" role="status" aria-live="polite">
+    <span id="toast-message"></span>
+    <button id="toast-action" class="hidden px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 font-bold text-brand-200"></button>
+    <button onclick="hideToast()" class="px-1.5 text-stone-400 hover:text-white" aria-label="Dismiss"><i class="fa-solid fa-xmark"></i></button>
   </div>
 
   <!-- Dinner Recipe Box Modal -->
@@ -516,7 +682,8 @@
       'as needed'
     ];
 
-    const BULK_CONTAINER_UNITS = ['box', 'tub', 'canister', 'bunch', 'as needed'];
+    // One container covers the whole week no matter how many meals use it
+    const BULK_CONTAINER_UNITS = ['box', 'tub', 'canister', 'as needed'];
 
     const STANDARD_TAGS = [
       'High Iron',
@@ -529,6 +696,10 @@
       'Sesame',
       'Legumes',
       'Wheat',
+      'Soy',
+      'Fish',
+      'Shellfish',
+      'Mustard',
       'Chicken',
       'Beef',
       'Pork',
@@ -556,7 +727,28 @@
         cookModeNote: "Blend or fork-mash silky smooth. Thin with breast milk, formula, or warm water. Focus on single allergen exposure and bioavailable iron.",
         subtext: "Green check = In week's menu. Stage 1 focus: Single allergen introduction & pureed iron.",
         safetyTagText: "No Honey Under 12m",
-        safetyTagClass: "bg-rose-50 text-rose-700 border-rose-200"
+        safetyTagClass: "bg-rose-50 text-rose-700 border-rose-200",
+        guide: {
+          skills: [
+            "Ready signs: sits with little support and good head control, opens mouth for food, doesn't push food straight back out with the tongue, and turns away when done.",
+            "Eats soft food from a spoon, starts finger-feeding, and sips from an open cup that you hold."
+          ],
+          textures: [
+            "Offer a range of soft textures from the start: purées, mashed, lumpy, minced, and soft finger foods like soft-cooked vegetable pieces, ripe banana and toast strips.",
+            "Thin smooth peanut or nut butter with water, breast milk or a purée baby already eats. Never serve it in a glob or on a spoon."
+          ],
+          howMuch: [
+            "Start with a teaspoon or two and follow baby's cues. Work up to 2–3 meals and 1–2 snacks a day by about 8 months.",
+            "Breast milk or formula is still the main food, on cue. You decide what to offer; baby decides how much and whether to eat."
+          ],
+          drinks: [
+            "Small sips of water from an open cup with meals (skip no-spill sippy cups). Juice isn't needed."
+          ],
+          focus: [
+            "Iron-rich food at least twice a day: meat, fish, poultry, egg, tofu, legumes, or iron-fortified infant cereal.",
+            "Common allergens (peanut, egg, milk products, wheat, soy, sesame, fish) can start around 6 months. For babies at high risk of allergy, the CPS recommends cooked egg and peanut at about 6 months, not before 4 months."
+          ]
+        }
       },
       stage_2: {
         id: 'stage_2',
@@ -568,7 +760,28 @@
         cookModeNote: "Leave soft chewable lumps. Offer graspable spears (soft sweet potato wedges, steamed broccoli stems). Keep foods salt-free.",
         subtext: "Stage 2 focus: Palmar grasp, chewing mechanics, and multi-texture exploration.",
         safetyTagText: "No Honey Under 12m",
-        safetyTagClass: "bg-rose-50 text-rose-700 border-rose-200"
+        safetyTagClass: "bg-rose-50 text-rose-700 border-rose-200",
+        guide: {
+          skills: [
+            "The tongue starts moving side to side, so baby can push food to the gums and chew soft lumps and chopped food.",
+            "Grasp gets more precise; the thumb-and-finger pincer grasp often appears around 9–10 months."
+          ],
+          textures: [
+            "Move to thicker, lumpier mashes and soft chopped foods, plus soft strips baby can hold.",
+            "Lumpy textures should be offered by 9 months at the latest. Delaying them is linked to feeding difficulties later."
+          ],
+          howMuch: [
+            "By 9 months, up to 3 meals and 1–2 snacks a day, depending on appetite. Breast milk or formula continues."
+          ],
+          drinks: [
+            "Water from an open cup with meals.",
+            "Homogenized (3.25%) cow's milk can be introduced as a drink between 9 and 12 months. No skim, 1% or 2% milk before age 2."
+          ],
+          focus: [
+            "Keep iron-rich foods at least twice a day.",
+            "Keep offering allergens baby already tolerates a few times a week so tolerance is maintained."
+          ]
+        }
       },
       stage_3: {
         id: 'stage_3',
@@ -580,21 +793,73 @@
         cookModeNote: "Cut proteins and veggies into small pea-sized pieces or tender shreds. Encourage self-feeding with fingers. Keep added sodium minimal.",
         subtext: "Stage 3 focus: Pincer grasp (thumb & forefinger) and transitioning toward family table foods.",
         safetyTagText: "No Honey Under 12m",
-        safetyTagClass: "bg-rose-50 text-rose-700 border-rose-200"
+        safetyTagClass: "bg-rose-50 text-rose-700 border-rose-200",
+        guide: {
+          skills: [
+            "Tries to use a spoon, finger-feeds with a more advanced grasp, and settles into regular meal times."
+          ],
+          textures: [
+            "By 12 months, offer family foods that are ground, mashed or chopped and tender: small pieces of dry toast, soft-cooked vegetables, cheese cubes, soft or canned fruit.",
+            "Keep cutting round foods: quarter grapes and cherry tomatoes lengthwise."
+          ],
+          howMuch: [
+            "About 3 meals and 1–2 snacks a day, following appetite."
+          ],
+          drinks: [
+            "Move from the bottle to an open cup around 12 months.",
+            "Homogenized (3.25%) milk is fine as a drink from 9–12 months."
+          ],
+          focus: [
+            "Iron-rich foods at least twice a day.",
+            "Still no honey in any form until 12 months, including baked or cooked in food."
+          ]
+        }
       },
       stage_4: {
         id: 'stage_4',
         title: 'Stage 4: 12+ Months / Toddler (Full Family Table Food)',
         shortLabel: 'Stage 4 (12m+ Toddler)',
-        minMonth: 13,
+        minMonth: 12,
         maxMonth: 999,
         reminder: "Toddler Portion: Serve as regular table food in manageable bite-size pieces. Whole cow's milk and honey now safe; keep added salt and sugar light.",
         cookModeNote: "Serve regular table meal in manageable pieces. Cow's milk and honey are now safe. Support spoon and open-cup drinking.",
         subtext: "Stage 4 focus: Balanced meal variety, healthy family habits, and daily iron & calcium.",
         safetyTagText: "Whole Milk & Honey Safe (12m+)",
-        safetyTagClass: "bg-emerald-50 text-emerald-700 border-emerald-200"
+        safetyTagClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        guide: {
+          skills: [
+            "Chewing matures between 12 and 18 months. Toddlers pick up food with their fingers, use a spoon awkwardly, and drink from a cup with some dribbling."
+          ],
+          textures: [
+            "Family foods cut into manageable pieces. Keep modifying choking hazards until age 4 (see safety below)."
+          ],
+          howMuch: [
+            "3 meals and 2–3 snacks a day. You choose what, when and where; your toddler chooses how much."
+          ],
+          drinks: [
+            "About 500 mL (2 cups) of homogenized milk a day, and no more than 750 mL (3 cups).",
+            "Soy, rice, almond, oat, coconut and other plant drinks aren't suitable as the main milk before age 2. Finish moving off the bottle by 18 months.",
+            "Honey is now safe."
+          ],
+          focus: [
+            "Offer an iron-rich food at every meal."
+          ]
+        }
       }
     };
+
+    // Guidance that applies at every stage (Health Canada and CPS)
+    const STAGE_SAFETY = [
+      "Always seat baby upright and stay with them while they eat. No eating while walking, playing or riding in a car.",
+      "Gagging is normal and loud, often with a red face. Choking is silent and the skin may turn blue: call 911 and start first aid.",
+      "Until age 4, avoid whole nuts and peanuts, seeds, popcorn, hard candy, gum, marshmallows, fish with bones, and food on skewers.",
+      "Grate raw carrot and apple, remove pits, quarter grapes lengthwise, cut hot dogs lengthwise then dice, finely chop stringy foods, and spread nut butter thinly.",
+      "No honey before 12 months, even in cooking (risk of infant botulism). Use little or no added salt or sugar.",
+      "Skip raw or unpasteurized milk and juice, raw or runny eggs, undercooked meat, raw shellfish or sushi, and raw sprouts.",
+      "Limit fresh or frozen tuna, shark, swordfish, marlin, orange roughy and escolar to 75 g a month. Other fish (salmon, trout, cod, canned light tuna) is encouraged.",
+      "Allergens: once one is tolerated, keep offering it a few times a week. Health Canada suggests one new allergen at a time with 2 days between; the CPS (2021) says new foods can go on consecutive days.",
+      "Reaction signs: hives, itchy mouth, vomiting, wheezing, or swelling of the face or tongue. Call 911 for trouble breathing, swelling of the lips, tongue or throat, throat tightness, dizziness or fainting."
+    ];
 
     // 17 Curated 1-Pan Dinners
     const DEFAULT_DINNERS = [
@@ -961,11 +1226,7 @@
 
     const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-    // State Initialization under storage key (_v10)
-    let dinners = JSON.parse(localStorage.getItem('family_dinners_v10')) || DEFAULT_DINNERS;
-    let breakfasts = JSON.parse(localStorage.getItem('family_breakfasts_v10')) || DEFAULT_BREAKFASTS;
-
-    let currentWeeklyPlan = JSON.parse(localStorage.getItem('family_weekly_plan_v10')) || {
+    const DEFAULT_WEEK_PLAN = {
       Monday: { dinner: 'rec_1', breakfast: 'bf_1' },
       Tuesday: { dinner: 'rec_2', breakfast: 'bf_2' },
       Wednesday: { dinner: 'rec_4', breakfast: 'bf_3' },
@@ -975,30 +1236,104 @@
       Sunday: { dinner: 'rec_16', breakfast: 'bf_7' }
     };
 
-    let checkedGroceries = JSON.parse(localStorage.getItem('family_checked_groceries_v10')) || [];
-    let stockedPantryItems = JSON.parse(localStorage.getItem('family_stocked_pantry_v10')) || [];
-    let clearedAllergens = JSON.parse(localStorage.getItem('family_cleared_allergens_v10')) || ['Peanut'];
-    let customGroceries = JSON.parse(localStorage.getItem('family_custom_groceries_v10')) || [];
+    // Escape user-entered text before putting it in innerHTML
+    function esc(value) {
+      return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    }
+    // A string literal that is safe inside an inline onclick="..." attribute
+    function jsArg(value) {
+      return esc(JSON.stringify(String(value ?? '')));
+    }
+
+    // Weeks are keyed by their Monday's local date, e.g. "2026-09-21"
+    function pad2(n) { return String(n).padStart(2, '0'); }
+    function toDateKey(d) { return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+    function dateFromKey(key) { const [y, m, d] = key.split('-').map(Number); return new Date(y, m - 1, d); }
+    function getWeekKey(date = new Date()) {
+      const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+      return toDateKey(d);
+    }
+    function addWeeks(key, n) { const d = dateFromKey(key); d.setDate(d.getDate() + 7 * n); return toDateKey(d); }
+    function dayDate(weekKey, dayIndex) { const d = dateFromKey(weekKey); d.setDate(d.getDate() + dayIndex); return d; }
+    function formatShortDate(d) { return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); }
+    function weekOffset(key) { return Math.round((dateFromKey(key) - dateFromKey(getWeekKey())) / (7 * 86400000)); }
+    function weekTitle(key = viewedWeekKey) {
+      const offset = weekOffset(key);
+      if (offset === 0) return 'This Week';
+      if (offset === 1) return 'Next Week';
+      if (offset === -1) return 'Last Week';
+      return `Week of ${formatShortDate(dateFromKey(key))}`;
+    }
+    function weekPhrase(key = viewedWeekKey) {
+      return Math.abs(weekOffset(key)) <= 1 ? weekTitle(key).toLowerCase() : `the week of ${formatShortDate(dateFromKey(key))}`;
+    }
+
+    function readLocal(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw === null ? fallback : JSON.parse(raw);
+      } catch (e) {
+        return fallback;
+      }
+    }
+
+    // State Initialization under storage key (_v10, weeks and checks _v11)
+    let dinners = readLocal('family_dinners_v10', null) || DEFAULT_DINNERS;
+    let breakfasts = readLocal('family_breakfasts_v10', null) || DEFAULT_BREAKFASTS;
+
+    // Older versions kept one undated week; it becomes the current week
+    let weeks = readLocal('family_weeks_v11', null) || { [getWeekKey()]: readLocal('family_weekly_plan_v10', null) || DEFAULT_WEEK_PLAN };
+    // Checked grocery items per week, keyed by normalized item name so quantity changes keep the check
+    let groceryChecks = readLocal('family_grocery_checks_v11', {});
+    let stockedPantryItems = readLocal('family_stocked_pantry_v10', []);
+    let clearedAllergens = readLocal('family_cleared_allergens_v10', ['Peanut']);
+    let customGroceries = readLocal('family_custom_groceries_v10', []);
     let groceryScope = localStorage.getItem('family_grocery_scope_v10') || 'full';
 
     // Pediatric Stage Engine State
     let babyBirthdate = localStorage.getItem('family_baby_birthdate_v10') || '';
     let selectedStageKey = localStorage.getItem('family_baby_stage_v10') || 'stage_1';
+    let stageOverride = readLocal('family_stage_override_v10', false);
+
+    let viewedWeekKey = getWeekKey();
+    let currentWeeklyPlan = weeks[viewedWeekKey] || createWeek();
 
     let activeDaySelecting = null;
     let wakeLockSentinel = null;
 
-    function saveState() {
+    // A blank week gets dinners unset and breakfasts rotated through what the current stage allows
+    function createWeek() {
+      const available = getAvailableBreakfasts();
+      return Object.fromEntries(DAYS_OF_WEEK.map((day, i) => [
+        day,
+        { dinner: null, breakfast: available.length ? available[i % available.length].id : null }
+      ]));
+    }
+
+    function currentChecks() {
+      return groceryChecks[viewedWeekKey] || [];
+    }
+
+    function writeLocalCache() {
       localStorage.setItem('family_dinners_v10', JSON.stringify(dinners));
       localStorage.setItem('family_breakfasts_v10', JSON.stringify(breakfasts));
-      localStorage.setItem('family_weekly_plan_v10', JSON.stringify(currentWeeklyPlan));
-      localStorage.setItem('family_checked_groceries_v10', JSON.stringify(checkedGroceries));
+      localStorage.setItem('family_weeks_v11', JSON.stringify(weeks));
+      localStorage.setItem('family_grocery_checks_v11', JSON.stringify(groceryChecks));
       localStorage.setItem('family_stocked_pantry_v10', JSON.stringify(stockedPantryItems));
       localStorage.setItem('family_cleared_allergens_v10', JSON.stringify(clearedAllergens));
       localStorage.setItem('family_custom_groceries_v10', JSON.stringify(customGroceries));
       localStorage.setItem('family_grocery_scope_v10', groceryScope);
       localStorage.setItem('family_baby_birthdate_v10', babyBirthdate);
       localStorage.setItem('family_baby_stage_v10', selectedStageKey);
+      localStorage.setItem('family_stage_override_v10', JSON.stringify(stageOverride));
+    }
+
+    function saveState() {
+      // A week only gets stored once something in it is edited, so browsing ahead doesn't create empty weeks
+      weeks[viewedWeekKey] = currentWeeklyPlan;
+      writeLocalCache();
+      scheduleSync();
       updateUI();
     }
 
@@ -1025,7 +1360,7 @@
       if (months === null) return selectedStageKey || 'stage_1';
       if (months < 8) return 'stage_1';
       if (months < 10) return 'stage_2';
-      if (months < 13) return 'stage_3';
+      if (months < 12) return 'stage_3';
       return 'stage_4';
     }
 
@@ -1055,6 +1390,7 @@
 
     function onBirthdateChanged(dateVal) {
       babyBirthdate = dateVal;
+      stageOverride = false;
       const months = calculateBabyAgeMonths(dateVal);
       if (months !== null) {
         selectedStageKey = determineStageFromAge(months);
@@ -1067,6 +1403,9 @@
 
     function onStageSelectChanged(stageVal) {
       selectedStageKey = stageVal;
+      // A hand-picked stage sticks until the birthdate is changed again
+      stageOverride = true;
+      updateModalAgeFeedback();
       ensureBreakfastsMatchStage();
       saveState();
     }
@@ -1091,7 +1430,9 @@
       const months = calculateBabyAgeMonths(babyBirthdate);
       const feedback = document.getElementById('age-calc-feedback');
       if (months !== null) {
-        feedback.innerText = `Calculated Age: ~${months} month${months === 1 ? '' : 's'} old. Automatically assigned to ${BABY_STAGES[determineStageFromAge(months)].shortLabel}.`;
+        feedback.innerText = stageOverride
+          ? `Calculated Age: ~${months} month${months === 1 ? '' : 's'} old. Using your manual stage choice; re-enter the birthdate to go back to automatic.`
+          : `Calculated Age: ~${months} month${months === 1 ? '' : 's'} old. Automatically assigned to ${BABY_STAGES[determineStageFromAge(months)].shortLabel}.`;
       } else {
         feedback.innerText = "Enter birthdate to automatically calculate and advance stages as baby grows.";
       }
@@ -1113,9 +1454,41 @@
       }
 
       document.getElementById('radar-subtext').innerText = stage.subtext;
+      renderStageGuide(stage);
       const safetyTag = document.getElementById('radar-safety-tag');
-      safetyTag.className = `text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 ${stage.safetyTagClass}`;
+      safetyTag.className = `text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 whitespace-nowrap shrink-0 ${stage.safetyTagClass}`;
       safetyTag.innerHTML = `<i class="fa-solid ${selectedStageKey === 'stage_4' ? 'fa-check' : 'fa-triangle-exclamation'}"></i> ${stage.safetyTagText}`;
+    }
+
+    function renderStageGuide(stage) {
+      const sections = [
+        ['fa-child-reaching', 'Skills & signs', stage.guide.skills],
+        ['fa-utensils', 'Textures & how to serve', stage.guide.textures],
+        ['fa-clock', 'How much & how often', stage.guide.howMuch],
+        ['fa-glass-water', 'Drinks', stage.guide.drinks],
+        ['fa-heart-pulse', 'Iron & allergens', stage.guide.focus]
+      ];
+      const list = items => `<ul class="list-disc pl-4 space-y-0.5">${items.map(i => `<li>${esc(i)}</li>`).join('')}</ul>`;
+      document.getElementById('stage-guide-summary').innerText = `Full ${stage.shortLabel.split(' (')[0]} guide & safety`;
+      document.getElementById('stage-guide-body').innerHTML = `
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          ${sections.map(([icon, title, items]) => `
+            <div class="bg-white/70 border border-amber-200/80 rounded-xl p-2.5">
+              <p class="font-bold text-amber-950 mb-1 flex items-center gap-1.5"><i class="fa-solid ${icon} text-amber-600"></i> ${title}</p>
+              ${list(items)}
+            </div>
+          `).join('')}
+        </div>
+        <div class="bg-rose-50/80 border border-rose-200 rounded-xl p-2.5 text-rose-950">
+          <p class="font-bold mb-1 flex items-center gap-1.5"><i class="fa-solid fa-shield-heart text-rose-500"></i> Safety at every stage</p>
+          ${list(STAGE_SAFETY)}
+        </div>
+        <p class="text-[10px] text-amber-900/70">
+          Based on Health Canada's <a class="underline" target="_blank" rel="noopener" href="https://www.canada.ca/en/health-canada/services/canada-food-guide/resources/nutrition-healthy-term-infants/nutrition-healthy-term-infants-recommendations-birth-six-months/6-24-months.html">Nutrition for Healthy Term Infants (6–24 months)</a>
+          and the Canadian Paediatric Society's <a class="underline" target="_blank" rel="noopener" href="https://caringforkids.cps.ca/handouts/healthy-living/feeding_your_baby_in_the_first_year">Feeding your baby in the first year</a>.
+          Ask your doctor or public health nurse about your own baby, especially if there's a family history of allergy.
+        </p>
+      `;
     }
 
     function getKnownIngredientMap() {
@@ -1149,6 +1522,7 @@
       document.getElementById('breakfast-count-badge').innerText = breakfasts.length;
       renderStageUI();
       refreshAutocompleteDatalist();
+      renderWeekHeader();
       renderPlanner();
       renderRadar();
       renderGroceryScopeButtons();
@@ -1198,20 +1572,45 @@
       });
     }
 
+    // Keyword rules for spotting allergens in ingredient names. `except` removes look-alikes
+    // (peanut butter isn't dairy, eggplant isn't egg, corn tortillas aren't wheat).
+    const ALLERGEN_RULES = [
+      { key: 'Peanut', match: /peanut|groundnut/ },
+      { key: 'Tree Nut', match: /almond|cashew|walnut|pecan|hazelnut|pistachio|macadamia|brazil nut|pine nut|praline|marzipan|nutella/ },
+      { key: 'Egg', match: /\beggs?\b|mayo|meringue|aioli/ },
+      {
+        key: 'Dairy',
+        match: /\bmilk|cheese|cheddar|mozzarella|parmesan|ricotta|feta|yogh?urt|\bbutter\b|cream|ghee|tzatziki|kefir|whey|casein|queso|paneer/,
+        except: /(breast|coconut|oat|almond|soy|rice|cashew|hemp|plant)[ -]milk|(peanut|almond|cashew|sunflower|seed|nut|apple|soy|pea)[ -]?butter|coconut (cream|yogh?urt)|cream of tartar|dairy-free|vegan/
+      },
+      { key: 'Sesame', match: /sesame|tahini|hummus|halva|za'?atar/ },
+      { key: 'Soy', match: /\bsoy|tofu|edamame|tempeh|miso|tamari/, except: /soy-free/ },
+      {
+        key: 'Wheat',
+        match: /wheat|pasta|macaroni|spaghetti|rotini|penne|fusilli|noodle|orzo|couscous|bread|\bbuns?\b|bagel|pita|naan|tortilla|flour|cracker|panko|crumb|semolina|farina|seitan|soy sauce|teriyaki|pancake|waffle|muffin|biscuit/,
+        except: /(corn|rice|gluten-free) (tortilla|pasta|noodle|cracker|bread|flour)|(oat|almond|coconut|rice|corn|chickpea|cassava) flour|buckwheat|infant oat|rice noodle|gluten-free/
+      },
+      { key: 'Fish', except: /shellfish|crayfish|crawfish/, match: /fish|salmon|tuna|cod\b|haddock|halibut|trout|sardine|tilapia|pollock|mackerel|anchov|herring|sole\b|snapper/ },
+      { key: 'Shellfish', match: /shellfish|shrimp|prawn|crab|lobster|scallop|mussel|clam|oyster|crawfish|crayfish|squid|calamari/ },
+      { key: 'Mustard', match: /mustard|dijon/ },
+      { key: 'Legumes', match: /lentil|chickpea|garbanzo|hummus|black bean|kidney bean|pinto|navy bean|white bean|cannellini|lima bean|\bpeas\b|split pea|edamame/ },
+      // Health Canada's iron-rich first foods: meat, poultry, fish, eggs, tofu, legumes, iron-fortified infant cereal
+      {
+        key: 'High Iron',
+        match: /beef|steak|lamb|venison|bison|chicken|turkey|poultry|pork|liver|oat cereal|infant cereal|iron-fortified|lentil|chickpea|black bean|kidney bean|white bean|navy bean|pinto|tofu|salmon|sardine|trout|tuna|\beggs?\b(?! white)/,
+        except: /broth|stock|bouillon/
+      }
+    ];
+
     function detectNutritionFromIngredients(ingredientsList) {
       const detected = new Set();
       if (!ingredientsList || !Array.isArray(ingredientsList)) return detected;
 
       ingredientsList.forEach(ing => {
         const str = (ing.name || '').toLowerCase();
-        if (str.includes('peanut')) detected.add('Peanut');
-        if (str.includes('almond') || str.includes('cashew') || str.includes('walnut') || str.includes('pecan') || str.includes('hazelnut') || str.includes('pistachio')) detected.add('Tree Nut');
-        if (str.includes('egg')) detected.add('Egg');
-        if (str.includes('yogurt') || str.includes('cheese') || str.includes('milk') || str.includes('cream') || str.includes('butter') || str.includes('tzatziki')) detected.add('Dairy');
-        if (str.includes('sesame') || str.includes('tahini')) detected.add('Sesame');
-        if (str.includes('black bean') || str.includes('lentil') || str.includes('chickpea') || str.includes('peas') || str.includes('edamame') || str.includes('kidney bean')) detected.add('Legumes');
-        if (str.includes('pasta') || str.includes('bread') || str.includes('bun') || str.includes('macaroni') || str.includes('tortilla') || str.includes('orzo') || str.includes('flour')) detected.add('Wheat');
-        if (str.includes('beef') || str.includes('steak') || str.includes('chicken thigh') || str.includes('turkey') || str.includes('oat cereal') || str.includes('lentil') || str.includes('spinach') || str.includes('pork')) detected.add('High Iron');
+        ALLERGEN_RULES.forEach(rule => {
+          if (rule.match.test(str) && !(rule.except && rule.except.test(str))) detected.add(rule.key);
+        });
       });
 
       return detected;
@@ -1236,11 +1635,12 @@
           currentWeeklyPlan[day].breakfast = breakfast.id;
         }
 
-        const isPast = index < todayIdx;
-        const isToday = index === todayIdx;
+        const offset = weekOffset(viewedWeekKey);
+        const isPast = offset < 0 || (offset === 0 && index < todayIdx);
+        const isToday = offset === 0 && index === todayIdx;
 
         const card = document.createElement('div');
-        card.className = `rounded-xl border overflow-hidden shadow-sm transition ${
+        card.className = `print-card rounded-xl border overflow-hidden shadow-sm transition ${
           isPast 
             ? 'bg-stone-200/70 border-stone-300 opacity-60' 
             : isToday 
@@ -1255,14 +1655,14 @@
                 ${day.substring(0, 2)}
               </span>
               <h3 class="font-bold ${isPast ? 'text-stone-600' : 'text-stone-900'} text-sm flex items-center gap-2">
-                ${day}
-                ${isToday ? '<span class="px-1.5 py-0.2 bg-brand-500 text-white rounded text-[10px] font-extrabold uppercase tracking-wider">Today</span>' : ''}
+                ${day} <span class="text-[11px] font-medium ${isPast ? 'text-stone-500' : 'text-stone-400'}">${formatShortDate(dayDate(viewedWeekKey, index))}</span>
+                ${isToday ? '<span class="px-1.5 py-px bg-brand-500 text-white rounded text-[10px] font-extrabold uppercase tracking-wider">Today</span>' : ''}
                 ${isPast ? '<span class="text-[11px] text-stone-400 font-normal italic">(Past)</span>' : ''}
               </h3>
             </div>
             
-            <div class="flex items-center gap-2">
-              <button onclick="shuffleSingleDay('${day}')" class="text-xs ${isPast ? 'text-stone-400' : 'text-stone-500'} hover:text-brand-600 font-semibold flex items-center gap-1 transition" title="Swap just today's dinner">
+            <div class="flex items-center gap-2 print-hide">
+              <button onclick="shuffleSingleDay('${day}')" class="text-xs ${isPast ? 'text-stone-400' : 'text-stone-500'} hover:text-brand-600 font-semibold flex items-center gap-1 transition" title="Swap just this day's dinner">
                 <i class="fa-solid fa-shuffle text-[11px]"></i> Shuffle
               </button>
               <button onclick="openRecipeModal('${day}')" class="text-xs text-brand-600 hover:text-brand-700 font-semibold flex items-center gap-1">
@@ -1279,18 +1679,18 @@
                   <span class="text-[10px] uppercase font-bold tracking-wider ${isPast ? 'text-stone-500' : 'text-sage-700'} flex items-center gap-1">
                     <i class="fa-solid fa-sun ${isPast ? 'text-stone-400' : 'text-amber-500'}"></i> Baby Breakfast
                   </span>
-                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-white text-sage-700 border border-sage-200">
+                  <span class="text-[9px] font-bold px-1.5 py-px rounded bg-white text-sage-700 border border-sage-200">
                     ${currentStage.shortLabel}
                   </span>
                 </div>
                 
                 <select onchange="changeBreakfast('${day}', this.value)" class="w-full text-xs bg-white border ${isPast ? 'border-stone-300 text-stone-500' : 'border-sage-200 text-stone-800'} rounded-md px-2 py-1.5 font-medium focus:ring-1 focus:ring-sage-500 focus:outline-none shadow-xs truncate cursor-pointer">
-                  ${availableBreakfasts.map(b => `<option value="${b.id}" ${b.id === (breakfast ? breakfast.id : '') ? 'selected' : ''}>${b.title}</option>`).join('')}
+                  ${availableBreakfasts.map(b => `<option value="${esc(b.id)}" ${b.id === (breakfast ? breakfast.id : '') ? 'selected' : ''}>${esc(b.title)}</option>`).join('')}
                 </select>
               </div>
 
               <div class="flex flex-wrap gap-1 pt-1 border-t ${isPast ? 'border-stone-300' : 'border-sage-100/60'}">
-                ${breakfast && breakfast.tags ? breakfast.tags.map(t => `<span class="px-1.5 py-0.5 bg-white ${isPast ? 'text-stone-500 border-stone-200' : 'text-sage-700 border-sage-200/60'} rounded text-[9px] font-bold border shadow-2xs">${t}</span>`).join('') : ''}
+                ${breakfast && breakfast.tags ? breakfast.tags.map(t => `<span class="px-1.5 py-0.5 bg-white ${isPast ? 'text-stone-500 border-stone-200' : 'text-sage-700 border-sage-200/60'} rounded text-[9px] font-bold border shadow-2xs">${esc(t)}</span>`).join('') : ''}
               </div>
             </div>
 
@@ -1303,14 +1703,14 @@
                       <i class="fa-solid fa-moon ${isPast ? 'text-stone-400' : 'text-indigo-400'}"></i> Dinner + Tomorrow's Lunch
                     </span>
                     <div class="flex items-center gap-1.5">
-                      <span class="px-2 py-0.5 ${isPast ? 'bg-stone-300/80 text-stone-600' : 'bg-stone-100 text-stone-600'} rounded text-[10px] font-medium">${dinner.type || 'Dinner'}</span>
-                      <button onclick="openCookMode('${dinner.id}')" class="px-2 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded text-[10px] font-bold flex items-center gap-1 transition">
+                      <span class="px-2 py-0.5 ${isPast ? 'bg-stone-300/80 text-stone-600' : 'bg-stone-100 text-stone-600'} rounded text-[10px] font-medium whitespace-nowrap">${esc(dinner.type || 'Dinner')}</span>
+                      <button onclick="openCookMode(${jsArg(dinner.id)})" class="print-hide px-2 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded text-[10px] font-bold flex items-center gap-1 transition whitespace-nowrap">
                         <i class="fa-solid fa-fire text-amber-500"></i> Cook Mode
                       </button>
                     </div>
                   </div>
-                  <h4 class="text-sm font-bold ${isPast ? 'text-stone-700' : 'text-stone-900'} mb-1">${dinner.title}</h4>
-                  <p class="text-xs ${isPast ? 'text-stone-500' : 'text-stone-600'} mb-2.5">${dinner.instructions || ''}</p>
+                  <h4 class="text-sm font-bold ${isPast ? 'text-stone-700' : 'text-stone-900'} mb-1">${esc(dinner.title)}</h4>
+                  <p class="text-xs ${isPast ? 'text-stone-500' : 'text-stone-600'} mb-2.5">${esc(dinner.instructions || '')}</p>
                   
                   <!-- Dynamic Stage-Adaptive Reminder -->
                   <div class="${isPast ? 'bg-stone-300/50 border-stone-300 text-stone-600' : 'bg-amber-50/80 border-amber-200/70 text-amber-900'} border rounded-lg px-2.5 py-1.5 text-xs flex items-center gap-2">
@@ -1323,7 +1723,7 @@
               ` : `
                 <div class="py-6 text-center">
                   <p class="text-xs text-stone-400 mb-2">No dinner chosen for this day</p>
-                  <button onclick="openRecipeModal('${day}')" class="px-3 py-1.5 bg-brand-50 text-brand-600 rounded-lg text-xs font-semibold hover:bg-brand-100">
+                  <button onclick="openRecipeModal('${day}')" class="print-hide px-3 py-1.5 bg-brand-50 text-brand-600 rounded-lg text-xs font-semibold hover:bg-brand-100">
                     + Select Dinner
                   </button>
                 </div>
@@ -1355,8 +1755,12 @@
         { key: 'Egg', icon: 'fa-solid fa-egg' },
         { key: 'Dairy', icon: 'fa-solid fa-cheese' },
         { key: 'Sesame', icon: 'fa-solid fa-cookie' },
-        { key: 'Legumes', icon: 'fa-solid fa-bowl-rice' },
+        { key: 'Soy', icon: 'fa-solid fa-leaf' },
         { key: 'Wheat', icon: 'fa-solid fa-bread-slice' },
+        { key: 'Fish', icon: 'fa-solid fa-fish' },
+        { key: 'Shellfish', icon: 'fa-solid fa-shrimp' },
+        { key: 'Mustard', icon: 'fa-solid fa-jar' },
+        { key: 'Legumes', icon: 'fa-solid fa-bowl-rice' },
         { key: 'High Iron', icon: 'fa-solid fa-heart-pulse' }
       ];
 
@@ -1420,28 +1824,35 @@
 
     function setGroceryScope(scope) {
       groceryScope = scope;
-      saveState();
+      writeLocalCache();
+      updateUI();
     }
 
     function renderGroceryScopeButtons() {
       const fullBtn = document.getElementById('scope-full-btn');
       const restBtn = document.getElementById('scope-rest-btn');
       const todayBtn = document.getElementById('scope-today-btn');
+      const isCurrentWeek = weekOffset(viewedWeekKey) === 0;
+      const scope = isCurrentWeek ? groceryScope : 'full';
 
       const activeClass = 'bg-white text-stone-900 shadow-xs';
       const inactiveClass = 'text-stone-500 hover:text-stone-800';
 
-      fullBtn.className = `flex-1 py-1 px-2 rounded-md transition text-center ${groceryScope === 'full' ? activeClass : inactiveClass}`;
-      restBtn.className = `flex-1 py-1 px-2 rounded-md transition text-center ${groceryScope === 'rest' ? activeClass : inactiveClass}`;
-      todayBtn.className = `flex-1 py-1 px-2 rounded-md transition text-center ${groceryScope === 'today' ? activeClass : inactiveClass}`;
+      fullBtn.className = `flex-1 py-1 px-2 rounded-md transition text-center ${scope === 'full' ? activeClass : inactiveClass}`;
+      restBtn.className = `flex-1 py-1 px-2 rounded-md transition text-center ${scope === 'rest' ? activeClass : inactiveClass}`;
+      todayBtn.className = `flex-1 py-1 px-2 rounded-md transition text-center ${scope === 'today' ? activeClass : inactiveClass}`;
+      // "Rest of week" and "Today" only mean something for the current week
+      document.getElementById('grocery-scope-tabs').classList.toggle('hidden', !isCurrentWeek);
 
       const summaryText = document.getElementById('grocery-summary-text');
       const todayIdx = getTodayDayIndex();
       const todayName = DAYS_OF_WEEK[todayIdx];
 
-      if (groceryScope === 'full') {
-        summaryText.innerText = "All 7 scheduled days";
-      } else if (groceryScope === 'rest') {
+      if (!isCurrentWeek) {
+        summaryText.innerText = `All 7 days of ${weekPhrase()}`;
+      } else if (scope === 'full') {
+        summaryText.innerText = "All 7 days of this week";
+      } else if (scope === 'rest') {
         summaryText.innerText = `From ${todayName} through Sunday`;
       } else {
         summaryText.innerText = `Only today's meals (${todayName})`;
@@ -1450,12 +1861,123 @@
 
     function getDaysForCurrentScope() {
       const todayIdx = getTodayDayIndex();
+      if (weekOffset(viewedWeekKey) !== 0) return DAYS_OF_WEEK;
       if (groceryScope === 'today') {
         return [DAYS_OF_WEEK[todayIdx]];
       } else if (groceryScope === 'rest') {
         return DAYS_OF_WEEK.slice(todayIdx);
       }
       return DAYS_OF_WEEK;
+    }
+
+    // ---------- Grocery aggregation ----------
+    // Units in the same group are converted to a shared base before adding (oz/lbs, tbsp/cups, whole/medium)
+    const UNIT_GROUPS = {
+      whole: ['count', 1], medium: ['count', 1],
+      lbs: ['weight', 16], lb: ['weight', 16], oz: ['weight', 1],
+      cups: ['volume', 48], cup: ['volume', 48], tbsp: ['volume', 3], tsp: ['volume', 1]
+    };
+    // You can't buy half a can, so these round up
+    const ROUND_UP_UNITS = ['heads', 'can', 'pack', 'pouch', 'bunch', 'tub', 'box', 'canister'];
+    const UNIT_NAMES = {
+      heads: ['head', 'heads'], cloves: ['clove', 'cloves'], bunch: ['bunch', 'bunches'], can: ['can', 'cans'],
+      tub: ['tub', 'tubs'], box: ['box', 'boxes'], pack: ['pack', 'packs'], pouch: ['pouch', 'pouches'], canister: ['canister', 'canisters']
+    };
+
+    // "Sweet Potatoes" and "sweet potato" become the same item
+    function groceryKey(name) {
+      return String(name || '').toLowerCase().replace(/\s+/g, ' ').trim().replace(/([a-z]+)$/, w => {
+        if (w.length > 4 && w.endsWith('ies')) return w.slice(0, -3) + 'y';
+        if (w.length > 4 && w.endsWith('oes')) return w.slice(0, -2);
+        if (w.length > 3 && w.endsWith('s') && !w.endsWith('ss') && !w.endsWith('us')) return w.slice(0, -1);
+        return w;
+      });
+    }
+
+    function formatAmount(n) {
+      const whole = Math.floor(n + 1e-9);
+      const frac = n - whole;
+      const fractions = [[0.25, '¼'], [0.33, '⅓'], [0.5, '½'], [0.67, '⅔'], [0.75, '¾']];
+      const match = fractions.find(([v]) => Math.abs(frac - v) < 0.02);
+      if (frac < 0.02) return String(whole);
+      if (match) return `${whole || ''}${match[1]}`;
+      return String(Math.round(n * 100) / 100);
+    }
+
+    function formatGroceryPart(group, part) {
+      if (part.bulk) return `1 ${(UNIT_NAMES[group] || [group])[0]}`;
+      if (group === 'weight') {
+        return part.units.has('lbs') || part.units.has('lb') || part.base >= 16
+          ? `${formatAmount(part.base / 16)} lb`
+          : `${formatAmount(part.base)} oz`;
+      }
+      if (group === 'volume') {
+        const cups = part.base / 48;
+        if (part.units.has('cups') || part.units.has('cup') || cups >= 0.25) return `${formatAmount(cups)} ${cups > 1 ? 'cups' : 'cup'}`;
+        const tbsp = part.base / 3;
+        return tbsp >= 1 ? `${formatAmount(tbsp)} tbsp` : `${formatAmount(part.base)} tsp`;
+      }
+      if (group === 'count') {
+        const n = Math.ceil(part.base - 1e-9);
+        return part.units.has('medium') && !part.units.has('whole') ? `${n} medium` : String(n);
+      }
+      const n = ROUND_UP_UNITS.includes(group) ? Math.ceil(part.base - 1e-9) : part.base;
+      const names = UNIT_NAMES[group];
+      return `${formatAmount(n)} ${names ? names[n === 1 ? 0 : 1] : group}`;
+    }
+
+    // Single source for the on-screen list, Copy, and Print
+    function buildGroceryList(days = getDaysForCurrentScope()) {
+      const items = {};
+      days.forEach(day => {
+        const plan = currentWeeklyPlan[day];
+        if (!plan) return;
+        const meals = [dinners.find(r => r.id === plan.dinner), breakfasts.find(b => b.id === plan.breakfast)];
+        meals.forEach(meal => (meal?.ingredients || []).forEach(ing => {
+          const name = (ing.name || '').trim();
+          if (!name) return;
+          const key = groceryKey(name);
+          const item = items[key] || (items[key] = { key, name, category: ing.category || 'Pantry & Spices', parts: {}, asNeeded: false, days: new Set() });
+          item.days.add(day);
+
+          const unit = (ing.unit || '').toLowerCase().trim();
+          const amount = typeof ing.amount === 'number' && ing.amount > 0 ? ing.amount : null;
+          if (unit === 'as needed' || !unit) {
+            item.asNeeded = true;
+          } else if (BULK_CONTAINER_UNITS.includes(unit)) {
+            item.parts[unit] = { bulk: true };
+          } else if (amount === null) {
+            item.asNeeded = true;
+          } else {
+            const [group, factor] = UNIT_GROUPS[unit] || [unit, 1];
+            const part = item.parts[group] || (item.parts[group] = { base: 0, units: new Set() });
+            part.base += amount * factor;
+            part.units.add(unit);
+          }
+        }));
+      });
+
+      const stockedKeys = new Set(stockedPantryItems.map(groceryKey));
+      const checks = new Set(currentChecks());
+      const categories = {};
+      Object.values(items).forEach(item => {
+        const parts = Object.entries(item.parts).map(([group, part]) => formatGroceryPart(group, part));
+        item.qty = parts.length ? parts.join(' + ') : 'as needed';
+        item.dayLabel = item.days.size === 7 ? 'Every day' : DAYS_OF_WEEK.filter(d => item.days.has(d)).map(d => d.slice(0, 3)).join(' · ');
+        item.stocked = stockedKeys.has(item.key);
+        item.checked = checks.has(item.key);
+        (categories[item.category] || (categories[item.category] = [])).push(item);
+      });
+
+      // Store-walk order from AISLES, then anything custom
+      const order = cat => (AISLES.indexOf(cat) === -1 ? AISLES.length : AISLES.indexOf(cat));
+      return Object.keys(categories)
+        .sort((a, b) => order(a) - order(b) || a.localeCompare(b))
+        .map(cat => ({ category: cat, items: categories[cat].sort((a, b) => a.name.localeCompare(b.name)) }));
+    }
+
+    function customCheckKey(item) {
+      return 'custom:' + item.trim().toLowerCase();
     }
 
     // Grocery Aggregation with Smart Container Caps
@@ -1465,96 +1987,48 @@
       container.innerHTML = '';
       stashContainer.innerHTML = '';
 
-      const categoryMap = {};
+      const groups = buildGroceryList();
+      const stockedItemsInPlan = groups.flatMap(g => g.items.filter(i => i.stocked));
+      const checks = new Set(currentChecks());
 
-      function addIng(ing) {
-        const cat = ing.category || 'Pantry & Spices';
-        const name = ing.name.trim();
-        if (!categoryMap[cat]) categoryMap[cat] = {};
-
-        const isBulk = BULK_CONTAINER_UNITS.includes((ing.unit || '').toLowerCase());
-
-        if (!categoryMap[cat][name]) {
-          categoryMap[cat][name] = { 
-            amount: isBulk ? 1 : ing.amount, 
-            unit: ing.unit 
-          };
-        } else {
-          if (!isBulk && typeof ing.amount === 'number' && typeof categoryMap[cat][name].amount === 'number' && categoryMap[cat][name].unit === ing.unit) {
-            categoryMap[cat][name].amount += ing.amount;
-          }
-        }
-      }
-
-      const activeDays = getDaysForCurrentScope();
-
-      activeDays.forEach(day => {
-        const item = currentWeeklyPlan[day];
-        if (item) {
-          const dinner = dinners.find(r => r.id === item.dinner);
-          const breakfast = breakfasts.find(b => b.id === item.breakfast);
-          if (dinner && dinner.ingredients) dinner.ingredients.forEach(i => addIng(i));
-          if (breakfast && breakfast.ingredients) breakfast.ingredients.forEach(i => addIng(i));
-        }
-      });
-
-      const categories = Object.keys(categoryMap).sort();
-      const stockedItemsInPlan = [];
-
-      if (categories.length === 0 && customGroceries.length === 0) {
-        container.innerHTML = `<p class="text-stone-400 italic text-center py-6">No meals in selected range (${groceryScope}).</p>`;
+      if (groups.length === 0 && customGroceries.length === 0) {
+        container.innerHTML = `<p class="text-stone-400 italic text-center py-6">No meals planned for these days yet.</p>`;
         return;
       }
 
-      categories.forEach(cat => {
-        const itemNames = Object.keys(categoryMap[cat]).sort();
-        const activeItems = [];
+      let total = 0;
+      let done = 0;
+      groups.forEach(group => {
+        const activeItems = group.items.filter(i => !i.stocked);
+        if (activeItems.length === 0) return;
+        const section = document.createElement('div');
+        section.className = 'space-y-1.5';
+        section.innerHTML = `<h4 class="font-bold text-[11px] text-stone-500 uppercase tracking-wider border-b border-stone-100 pb-0.5">${esc(group.category)}</h4>`;
 
-        itemNames.forEach(name => {
-          const data = categoryMap[cat][name];
-          let displayLabel = name;
-          if (data.amount !== null && data.amount !== undefined) {
-            const formattedAmount = Math.round(data.amount * 100) / 100;
-            displayLabel = `${formattedAmount} ${data.unit} ${name}`;
-          } else if (data.unit && data.unit !== 'as needed') {
-            displayLabel = `${name} (${data.unit})`;
-          }
-
-          if (stockedPantryItems.includes(name)) {
-            stockedItemsInPlan.push({ name, displayLabel, cat });
-          } else {
-            activeItems.push({ name, displayLabel });
-          }
+        const list = document.createElement('div');
+        list.className = 'space-y-1';
+        activeItems.forEach(item => {
+          total++;
+          if (item.checked) done++;
+          const row = document.createElement('div');
+          row.className = 'flex items-center justify-between gap-2 group py-0.5';
+          row.innerHTML = `
+            <label class="flex items-start gap-2 text-stone-700 hover:text-stone-900 cursor-pointer select-none flex-1 min-w-0">
+              <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleGroceryCheck(${jsArg(item.key)})" class="rounded text-brand-500 focus:ring-0 cursor-pointer h-3.5 w-3.5 mt-0.5 shrink-0" />
+              <span class="min-w-0">
+                <span class="block truncate ${item.checked ? 'line-through text-stone-300' : ''}">${esc(item.name)}</span>
+                <span class="block text-[10px] ${item.checked ? 'text-stone-300' : 'text-stone-400'} truncate">${esc(item.dayLabel)}</span>
+              </span>
+            </label>
+            <span class="shrink-0 text-[11px] font-semibold tabular-nums ${item.checked ? 'text-stone-300 line-through' : item.qty === 'as needed' ? 'text-stone-400 font-normal italic' : 'text-stone-700'}">${esc(item.qty)}</span>
+            <button onclick="toggleStockedPantry(${jsArg(item.name)})" class="print-hide text-stone-300 hover:text-indigo-600 text-xs px-1 opacity-60 group-hover:opacity-100 transition" title="Mark as 'Already have in pantry'">
+              <i class="fa-solid fa-box-archive"></i>
+            </button>
+          `;
+          list.appendChild(row);
         });
-
-        if (activeItems.length > 0) {
-          const section = document.createElement('div');
-          section.className = 'space-y-1.5';
-          section.innerHTML = `<h4 class="font-bold text-[11px] text-stone-500 uppercase tracking-wider border-b border-stone-100 pb-0.5">${cat}</h4>`;
-
-          const list = document.createElement('div');
-          list.className = 'space-y-1';
-
-          activeItems.forEach(item => {
-            const isChecked = checkedGroceries.includes(item.displayLabel);
-            const row = document.createElement('div');
-            row.className = 'flex items-center justify-between group py-0.5';
-            row.innerHTML = `
-              <label class="flex items-center gap-2 text-stone-700 hover:text-stone-900 cursor-pointer select-none flex-1 truncate">
-                <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleGroceryCheck('${item.displayLabel.replace(/'/g, "\\'")}')" class="rounded text-brand-500 focus:ring-0 cursor-pointer h-3.5 w-3.5" />
-                <span class="truncate ${isChecked ? 'line-through text-stone-300' : ''}">${item.displayLabel}</span>
-              </label>
-
-              <button onclick="toggleStockedPantry('${item.name.replace(/'/g, "\\'")}')" class="text-stone-300 hover:text-indigo-600 text-xs px-1 opacity-60 group-hover:opacity-100 transition" title="Mark as 'Already have in pantry'">
-                <i class="fa-solid fa-box-archive"></i>
-              </button>
-            `;
-            list.appendChild(row);
-          });
-
-          section.appendChild(list);
-          container.appendChild(section);
-        }
+        section.appendChild(list);
+        container.appendChild(section);
       });
 
       if (customGroceries.length > 0) {
@@ -1566,15 +2040,17 @@
         customList.className = 'space-y-1';
 
         customGroceries.forEach(item => {
-          const isChecked = checkedGroceries.includes(item);
+          const isChecked = checks.has(customCheckKey(item));
+          total++;
+          if (isChecked) done++;
           const row = document.createElement('div');
           row.className = 'flex items-center justify-between py-0.5';
           row.innerHTML = `
             <label class="flex items-center gap-2 text-stone-700 hover:text-stone-900 cursor-pointer select-none flex-1 truncate">
-              <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleGroceryCheck('${item.replace(/'/g, "\\'")}')" class="rounded text-brand-500 focus:ring-0 cursor-pointer h-3.5 w-3.5" />
-              <span class="${isChecked ? 'line-through text-stone-300' : ''}">${item}</span>
+              <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleGroceryCheck(${jsArg(customCheckKey(item))})" class="rounded text-brand-500 focus:ring-0 cursor-pointer h-3.5 w-3.5" />
+              <span class="${isChecked ? 'line-through text-stone-300' : ''}">${esc(item)}</span>
             </label>
-            <button onclick="removeCustomStaple('${item.replace(/'/g, "\\'")}')" class="text-stone-300 hover:text-rose-500 text-xs px-1">
+            <button onclick="removeCustomStaple(${jsArg(item)})" class="print-hide text-stone-300 hover:text-rose-500 text-xs px-1" title="Remove">
               <i class="fa-solid fa-xmark"></i>
             </button>
           `;
@@ -1583,6 +2059,11 @@
 
         customSection.appendChild(customList);
         container.appendChild(customSection);
+      }
+
+      if (total > 0) {
+        const summary = document.getElementById('grocery-summary-text');
+        summary.innerText += ` · ${done} of ${total} checked`;
       }
 
       if (stockedItemsInPlan.length > 0) {
@@ -1597,8 +2078,8 @@
             <div class="space-y-1 mt-2 pl-2 text-stone-600">
               ${stockedItemsInPlan.map(si => `
                 <div class="flex items-center justify-between py-0.5 text-[11px]">
-                  <span class="line-through text-stone-400">${si.displayLabel}</span>
-                  <button onclick="toggleStockedPantry('${si.name.replace(/'/g, "\\'")}')" class="text-xs text-stone-400 hover:text-brand-600 font-semibold ml-2" title="Move back to need-to-buy grocery list">
+                  <span class="line-through text-stone-400">${esc(si.name)} <span class="text-stone-300">(${esc(si.qty)})</span></span>
+                  <button onclick="toggleStockedPantry(${jsArg(si.name)})" class="text-xs text-stone-400 hover:text-brand-600 font-semibold ml-2" title="Move back to need-to-buy grocery list">
                     Unstash
                   </button>
                 </div>
@@ -1610,8 +2091,9 @@
     }
 
     function toggleStockedPantry(name) {
-      if (stockedPantryItems.includes(name)) {
-        stockedPantryItems = stockedPantryItems.filter(i => i !== name);
+      const key = groceryKey(name);
+      if (stockedPantryItems.some(i => groceryKey(i) === key)) {
+        stockedPantryItems = stockedPantryItems.filter(i => groceryKey(i) !== key);
       } else {
         stockedPantryItems.push(name);
       }
@@ -1620,41 +2102,90 @@
 
     function removeCustomStaple(item) {
       customGroceries = customGroceries.filter(c => c !== item);
+      groceryChecks[viewedWeekKey] = currentChecks().filter(k => k !== customCheckKey(item));
       saveState();
     }
+
+    // ---------- Dinner picker with search and filters ----------
+    let recipeFilter = 'all';
 
     function openRecipeModal(day) {
       activeDaySelecting = day;
       document.getElementById('modal-title').innerText = `Select Dinner for ${day}`;
+      document.getElementById('recipe-search-input').value = '';
+      recipeFilter = 'all';
+      renderRecipePicker();
+      openModal('recipe-modal');
+    }
+
+    function setRecipeFilter(filter) {
+      recipeFilter = recipeFilter === filter ? 'all' : filter;
+      renderRecipePicker();
+    }
+
+    function renderRecipePicker() {
+      const day = activeDaySelecting;
+      const query = document.getElementById('recipe-search-input').value.trim().toLowerCase();
+      const usedDays = {};
+      DAYS_OF_WEEK.forEach(d => {
+        const id = currentWeeklyPlan[d]?.dinner;
+        if (id) (usedDays[id] || (usedDays[id] = [])).push(d.slice(0, 3));
+      });
+
+      const types = [...new Set(dinners.map(d => d.type || 'Dinner'))].sort();
+      const chips = [
+        ['all', 'All'],
+        ...types.map(t => [`type:${t}`, t]),
+        ['tag:High Iron', 'High Iron'],
+        ['unused', 'Not used this week']
+      ];
+      document.getElementById('recipe-filter-chips').innerHTML = chips.map(([value, label]) => `
+        <button type="button" onclick="setRecipeFilter(${jsArg(value)})" class="px-2 py-0.5 rounded-full text-[10px] font-semibold border transition ${
+          recipeFilter === value ? 'bg-brand-500 border-brand-500 text-white' : 'bg-white border-stone-200 text-stone-600 hover:border-brand-300'
+        }">${esc(label)}</button>
+      `).join('');
+
+      const matches = dinners.filter(rec => {
+        if (recipeFilter.startsWith('type:') && (rec.type || 'Dinner') !== recipeFilter.slice(5)) return false;
+        if (recipeFilter === 'tag:High Iron' && !(rec.tags || []).includes('High Iron') && !detectNutritionFromIngredients(rec.ingredients).has('High Iron')) return false;
+        if (recipeFilter === 'unused' && usedDays[rec.id]) return false;
+        if (!query) return true;
+        const haystack = [rec.title, rec.type, ...(rec.tags || []), ...(rec.ingredients || []).map(i => i.name)].join(' ').toLowerCase();
+        return query.split(/\s+/).every(word => haystack.includes(word));
+      });
+
       const list = document.getElementById('modal-recipe-list');
       list.innerHTML = '';
-
       if (dinners.length === 0) {
         list.innerHTML = `<p class="text-xs text-stone-400 text-center py-6">Your dinner library is empty.</p>`;
-      } else {
-        dinners.forEach(rec => {
-          const isCurrent = currentWeeklyPlan[day]?.dinner === rec.id;
-          const btn = document.createElement('button');
-          btn.className = `w-full text-left p-3 rounded-xl transition flex items-start justify-between gap-3 ${
-            isCurrent ? 'bg-brand-50 border border-brand-200' : 'hover:bg-stone-50'
-          }`;
-          btn.onclick = () => selectRecipeForDay(rec.id);
-
-          btn.innerHTML = `
-            <div>
-              <div class="flex items-center gap-2 mb-1">
-                <span class="text-xs font-bold text-stone-900">${rec.title}</span>
-                <span class="text-[10px] px-2 py-0.5 rounded bg-stone-100 text-stone-600">${rec.type || 'Dinner'}</span>
-              </div>
-              <p class="text-[11px] text-stone-500 line-clamp-2">${rec.instructions || ''}</p>
-            </div>
-            ${isCurrent ? '<i class="fa-solid fa-check text-brand-500 text-sm mt-1"></i>' : ''}
-          `;
-          list.appendChild(btn);
-        });
+        return;
+      }
+      if (matches.length === 0) {
+        list.innerHTML = `<p class="text-xs text-stone-400 text-center py-6">No dinners match. Try a different search or filter.</p>`;
+        return;
       }
 
-      openModal('recipe-modal');
+      matches.forEach(rec => {
+        const isCurrent = currentWeeklyPlan[day]?.dinner === rec.id;
+        const btn = document.createElement('button');
+        btn.className = `w-full text-left p-3 rounded-xl transition flex items-start justify-between gap-3 ${
+          isCurrent ? 'bg-brand-50 border border-brand-200' : 'hover:bg-stone-50'
+        }`;
+        btn.onclick = () => selectRecipeForDay(rec.id);
+        const used = usedDays[rec.id];
+        btn.innerHTML = `
+          <div>
+            <div class="flex items-center gap-2 mb-1 flex-wrap">
+              <span class="text-xs font-bold text-stone-900">${esc(rec.title)}</span>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-stone-100 text-stone-600">${esc(rec.type || 'Dinner')}</span>
+              ${used ? `<span class="text-[10px] px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">On ${esc(used.join(', '))}</span>` : ''}
+            </div>
+            <p class="text-[11px] text-stone-500 line-clamp-2">${esc(rec.instructions || '')}</p>
+          </div>
+          ${isCurrent ? '<i class="fa-solid fa-check text-brand-500 text-sm mt-1"></i>' : ''}
+        `;
+        list.appendChild(btn);
+      });
     }
 
     function selectRecipeForDay(recipeId) {
@@ -1672,13 +2203,12 @@
       saveState();
     }
 
-    function toggleGroceryCheck(itemName) {
-      if (checkedGroceries.includes(itemName)) {
-        checkedGroceries = checkedGroceries.filter(i => i !== itemName);
-      } else {
-        checkedGroceries.push(itemName);
-      }
-      localStorage.setItem('family_checked_groceries_v10', JSON.stringify(checkedGroceries));
+    function toggleGroceryCheck(key) {
+      const checks = currentChecks();
+      groceryChecks[viewedWeekKey] = checks.includes(key) ? checks.filter(i => i !== key) : [...checks, key];
+      writeLocalCache();
+      scheduleSync();
+      renderGroceryScopeButtons();
       renderGroceryList();
     }
 
@@ -1742,16 +2272,16 @@
           item.innerHTML = `
             <div class="flex-1">
               <div class="flex items-center gap-2">
-                <h4 class="text-xs font-bold text-stone-900">${d.title}</h4>
-                <span class="text-[10px] px-1.5 py-0.5 bg-stone-100 rounded text-stone-600">${d.type || 'Dinner'}</span>
+                <h4 class="text-xs font-bold text-stone-900">${esc(d.title)}</h4>
+                <span class="text-[10px] px-1.5 py-0.5 bg-stone-100 rounded text-stone-600">${esc(d.type || 'Dinner')}</span>
               </div>
-              <p class="text-[11px] text-stone-500 mt-1">${d.ingredients ? d.ingredients.map(i => `${i.amount ? i.amount + ' ' + i.unit + ' ' : ''}${i.name}`).join(', ') : ''}</p>
+              <p class="text-[11px] text-stone-500 mt-1">${d.ingredients ? esc(d.ingredients.map(i => `${i.amount ? i.amount + ' ' + i.unit + ' ' : ''}${i.name}`).join(', ')) : ''}</p>
             </div>
             <div class="flex items-center gap-2">
-              <button onclick="editDinner('${d.id}')" class="text-stone-400 hover:text-brand-600 text-xs p-1 transition" title="Edit Recipe">
+              <button onclick="editDinner(${jsArg(d.id)})" class="text-stone-400 hover:text-brand-600 text-xs p-1 transition" title="Edit Recipe">
                 <i class="fa-solid fa-pen"></i>
               </button>
-              <button onclick="deleteDinner('${d.id}')" class="text-stone-400 hover:text-rose-600 text-xs p-1 transition" title="Delete Dinner">
+              <button onclick="deleteDinner(${jsArg(d.id)})" class="text-stone-400 hover:text-rose-600 text-xs p-1 transition" title="Delete Dinner">
                 <i class="fa-solid fa-trash-can"></i>
               </button>
             </div>
@@ -1790,7 +2320,9 @@
     }
 
     function deleteDinner(id) {
+      const dinner = dinners.find(d => d.id === id);
       if (confirm("Delete this dinner recipe? It will also unassign from any scheduled days.")) {
+        pendingSnapshot = { label: `Before deleting "${dinner?.title || 'a dinner'}"`, week: viewedWeekKey };
         dinners = dinners.filter(d => d.id !== id);
         DAYS_OF_WEEK.forEach(day => {
           if (currentWeeklyPlan[day]?.dinner === id) currentWeeklyPlan[day].dinner = null;
@@ -1817,7 +2349,7 @@
           item.innerHTML = `
             <div class="flex-1">
               <div class="flex items-center gap-2 flex-wrap mb-0.5">
-                <h4 class="text-xs font-bold text-stone-900">${b.title}</h4>
+                <h4 class="text-xs font-bold text-stone-900">${esc(b.title)}</h4>
                 <!-- Stage Badge -->
                 <span class="text-[9px] font-bold px-2 py-0.5 rounded border ${
                   isUnlocked ? 'bg-amber-50 text-amber-900 border-amber-300' : 'bg-stone-100 text-stone-400 border-stone-200'
@@ -1825,13 +2357,13 @@
                   <i class="fa-solid ${isUnlocked ? 'fa-lock-open text-amber-600' : 'fa-lock text-stone-400'}"></i> ${stageDef.shortLabel}
                 </span>
               </div>
-              <p class="text-[11px] text-stone-500">${b.tags ? b.tags.join(', ') : ''}</p>
+              <p class="text-[11px] text-stone-500">${b.tags ? esc(b.tags.join(', ')) : ''}</p>
             </div>
             <div class="flex items-center gap-2">
-              <button onclick="editBreakfast('${b.id}')" class="text-stone-400 hover:text-sage-600 text-xs p-1 transition" title="Edit Breakfast">
+              <button onclick="editBreakfast(${jsArg(b.id)})" class="text-stone-400 hover:text-sage-600 text-xs p-1 transition" title="Edit Breakfast">
                 <i class="fa-solid fa-pen"></i>
               </button>
-              <button onclick="deleteBreakfast('${b.id}')" class="text-stone-400 hover:text-rose-600 text-xs p-1 transition" title="Delete Breakfast">
+              <button onclick="deleteBreakfast(${jsArg(b.id)})" class="text-stone-400 hover:text-rose-600 text-xs p-1 transition" title="Delete Breakfast">
                 <i class="fa-solid fa-trash-can"></i>
               </button>
             </div>
@@ -1869,7 +2401,9 @@
     }
 
     function deleteBreakfast(id) {
+      const breakfast = breakfasts.find(b => b.id === id);
       if (confirm("Delete this baby breakfast recipe?")) {
+        pendingSnapshot = { label: `Before deleting "${breakfast?.title || 'a breakfast'}"`, week: viewedWeekKey };
         breakfasts = breakfasts.filter(b => b.id !== id);
         ensureBreakfastsMatchStage();
         saveState();
@@ -1884,13 +2418,13 @@
       row.className = 'flex items-center gap-1.5 ing-row';
       
       row.innerHTML = `
-        <input type="text" list="known-ingredients-list" placeholder="Item name..." value="${name}" class="ing-name flex-1 text-xs rounded-lg border border-stone-300 px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-500" required />
-        <input type="number" step="any" placeholder="Qty" value="${amount}" class="ing-amount w-14 text-xs rounded-lg border border-stone-300 px-1.5 py-1.5 focus:outline-none text-center" />
+        <input type="text" list="known-ingredients-list" placeholder="Item name..." value="${esc(name)}" class="ing-name flex-1 text-xs rounded-lg border border-stone-300 px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-500" required />
+        <input type="number" step="any" placeholder="Qty" value="${esc(amount)}" class="ing-amount w-14 text-xs rounded-lg border border-stone-300 px-1.5 py-1.5 focus:outline-none text-center" />
         <select class="ing-unit text-[11px] rounded-lg border border-stone-300 px-1 py-1.5 focus:outline-none bg-white">
-          ${STANDARD_UNITS.map(u => `<option value="${u}" ${u === unit ? 'selected' : ''}>${u}</option>`).join('')}
+          ${[...new Set([...STANDARD_UNITS, unit])].map(u => `<option value="${esc(u)}" ${u === unit ? 'selected' : ''}>${esc(u)}</option>`).join('')}
         </select>
         <select class="ing-cat text-[11px] rounded-lg border border-stone-300 px-1 py-1.5 focus:outline-none bg-white">
-          ${AISLES.map(a => `<option value="${a}" ${a === category ? 'selected' : ''}>${a}</option>`).join('')}
+          ${[...new Set([...AISLES, category])].map(a => `<option value="${esc(a)}" ${a === category ? 'selected' : ''}>${esc(a)}</option>`).join('')}
         </select>
         <button type="button" onclick="this.parentElement.remove()" class="text-stone-300 hover:text-rose-500 p-1">
           <i class="fa-solid fa-xmark"></i>
@@ -2037,30 +2571,91 @@
       document.getElementById('open-breakfast-box-btn').click();
     });
 
+    // ---------- Toasts & undo ----------
+    let toastTimer = null;
+
+    function showToast(message, actionLabel, onAction) {
+      document.getElementById('toast-message').textContent = message;
+      const actionBtn = document.getElementById('toast-action');
+      if (actionLabel) {
+        actionBtn.textContent = actionLabel;
+        actionBtn.classList.remove('hidden');
+        actionBtn.onclick = () => { hideToast(); onAction(); };
+      } else {
+        actionBtn.classList.add('hidden');
+        actionBtn.onclick = null;
+      }
+      document.getElementById('toast').classList.remove('hidden');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(hideToast, actionLabel ? 10000 : 3500);
+    }
+
+    function hideToast() {
+      document.getElementById('toast').classList.add('hidden');
+    }
+
+    // Applies a change, asks the server to checkpoint the state before it, and offers an Undo
+    // that reverts only the keys this change touched (so edits from other devices survive)
+    function runUndoable(snapshotLabel, message, mutate) {
+      weeks[viewedWeekKey] = currentWeeklyPlan;
+      const before = {};
+      Object.entries(getSyncedState()).forEach(([k, v]) => { before[k] = JSON.stringify(v); });
+      mutate();
+      weeks[viewedWeekKey] = currentWeeklyPlan;
+      const after = getSyncedState();
+      const changedKeys = [...new Set([...Object.keys(before), ...Object.keys(after)])]
+        .filter(k => before[k] !== JSON.stringify(after[k]));
+      if (changedKeys.length === 0) {
+        updateUI();
+        showToast(message);
+        return;
+      }
+      pendingSnapshot = { label: snapshotLabel, week: viewedWeekKey };
+      saveState();
+      showToast(message, 'Undo', () => {
+        changedKeys.forEach(k => setSyncedValue(k, before[k] === undefined ? undefined : JSON.parse(before[k])));
+        currentWeeklyPlan = weeks[viewedWeekKey] || createWeek();
+        saveState();
+        showToast('Undone.');
+      });
+    }
+
+    function shuffled(list) {
+      const copy = [...list];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
     // Backup & Restore Handlers
     document.getElementById('export-backup-btn').addEventListener('click', () => {
       const backupData = {
-        version: 10,
+        version: 11,
         exportDate: new Date().toISOString(),
         dinners,
         breakfasts,
-        currentWeeklyPlan,
-        checkedGroceries,
+        weeks,
+        groceryChecks,
         stockedPantryItems,
         clearedAllergens,
         customGroceries,
         groceryScope,
         babyBirthdate,
-        selectedStageKey
+        selectedStageKey,
+        stageOverride
       };
 
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
       const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", "family-meal-planner-backup.json");
+      downloadAnchor.href = url;
+      downloadAnchor.download = `family-meal-planner-backup-${toDateKey(new Date())}.json`;
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     });
 
     document.getElementById('import-backup-input').addEventListener('change', (e) => {
@@ -2068,31 +2663,43 @@
       if (!file) return;
       const reader = new FileReader();
       reader.onload = function(evt) {
+        let parsed;
         try {
-          const parsed = JSON.parse(evt.target.result);
-          if (parsed && (parsed.dinners || parsed.recipes)) {
-            dinners = parsed.dinners || parsed.recipes || dinners;
-            breakfasts = (parsed.breakfasts || breakfasts).map(b => ({
-              ...b,
-              stage: b.stage || 'stage_1'
-            }));
-            currentWeeklyPlan = parsed.currentWeeklyPlan || parsed.schedule || currentWeeklyPlan;
-            checkedGroceries = parsed.checkedGroceries || [];
-            stockedPantryItems = parsed.stockedPantryItems || [];
-            clearedAllergens = parsed.clearedAllergens || ['Peanut'];
-            customGroceries = parsed.customGroceries || [];
-            groceryScope = parsed.groceryScope || 'full';
-            babyBirthdate = parsed.babyBirthdate || '';
-            selectedStageKey = parsed.selectedStageKey || 'stage_1';
-            ensureBreakfastsMatchStage();
-            saveState();
-            alert(`Backup restored successfully! Loaded ${dinners.length} dinners and ${breakfasts.length} breakfasts.`);
-          } else {
-            alert('Invalid backup file format.');
-          }
+          parsed = JSON.parse(evt.target.result);
         } catch (err) {
-          alert('Error reading JSON file. Please ensure it is a valid backup.');
+          showToast('That file isn\'t a valid backup.');
+          return;
         }
+        const importedDinners = parsed && (parsed.dinners || parsed.recipes);
+        if (!Array.isArray(importedDinners)) {
+          showToast('That file isn\'t a valid backup.');
+          return;
+        }
+        const importedBreakfasts = Array.isArray(parsed.breakfasts) ? parsed.breakfasts : breakfasts;
+        runUndoable('Before restoring a backup file', `Backup restored: ${importedDinners.length} dinners and ${importedBreakfasts.length} breakfasts.`, () => {
+          dinners = importedDinners;
+          breakfasts = importedBreakfasts.map(b => ({ ...b, stage: b.stage || 'stage_1' }));
+          if (parsed.weeks && typeof parsed.weeks === 'object') {
+            weeks = parsed.weeks;
+            groceryChecks = parsed.groceryChecks || {};
+          } else if (parsed.currentWeeklyPlan || parsed.schedule) {
+            // Older backups hold a single undated week
+            weeks[getWeekKey()] = parsed.currentWeeklyPlan || parsed.schedule;
+            groceryChecks[getWeekKey()] = [];
+          }
+          stockedPantryItems = parsed.stockedPantryItems || [];
+          clearedAllergens = parsed.clearedAllergens || ['Peanut'];
+          customGroceries = parsed.customGroceries || [];
+          groceryScope = parsed.groceryScope || 'full';
+          babyBirthdate = parsed.babyBirthdate || '';
+          selectedStageKey = parsed.selectedStageKey || 'stage_1';
+          stageOverride = !!parsed.stageOverride;
+          const months = calculateBabyAgeMonths(babyBirthdate);
+          if (months !== null && !stageOverride) selectedStageKey = determineStageFromAge(months);
+          currentWeeklyPlan = weeks[viewedWeekKey] || createWeek();
+          ensureBreakfastsMatchStage();
+        });
+        closeModal('history-modal');
       };
       reader.readAsText(file);
       e.target.value = '';
@@ -2100,31 +2707,31 @@
 
     // Autofill (Selects ONLY from currently unlocked breakfasts)
     document.getElementById('autofill-btn').addEventListener('click', () => {
-      if (dinners.length === 0) return alert('Add some dinners first!');
+      if (dinners.length === 0) return showToast('Add some dinners first.');
       const availableBfs = getAvailableBreakfasts();
-      if (availableBfs.length === 0) return alert('No breakfasts unlocked for current stage!');
+      if (availableBfs.length === 0) return showToast('No breakfasts are unlocked for the current stage.');
 
-      const shuffledDinners = [...dinners].sort(() => 0.5 - Math.random());
-      const shuffledBfs = [...availableBfs].sort(() => 0.5 - Math.random());
-
-      DAYS_OF_WEEK.forEach((day, idx) => {
-        currentWeeklyPlan[day] = {
-          dinner: shuffledDinners[idx % shuffledDinners.length].id,
-          breakfast: shuffledBfs[idx % shuffledBfs.length].id
-        };
+      runUndoable('Before Autofill', `Autofilled ${weekPhrase()}.`, () => {
+        const shuffledDinners = shuffled(dinners);
+        const shuffledBfs = shuffled(availableBfs);
+        DAYS_OF_WEEK.forEach((day, idx) => {
+          currentWeeklyPlan[day] = {
+            dinner: shuffledDinners[idx % shuffledDinners.length].id,
+            breakfast: shuffledBfs[idx % shuffledBfs.length].id
+          };
+        });
+        groceryChecks[viewedWeekKey] = [];
       });
-      checkedGroceries = [];
-      saveState();
     });
 
     document.getElementById('clear-plan-btn').addEventListener('click', () => {
-      const availableBfs = getAvailableBreakfasts();
-      const defaultBfId = availableBfs[0]?.id || null;
-      DAYS_OF_WEEK.forEach(day => {
-        currentWeeklyPlan[day] = { dinner: null, breakfast: defaultBfId };
+      runUndoable('Before Reset Week', `Cleared ${weekPhrase()}.`, () => {
+        const defaultBfId = getAvailableBreakfasts()[0]?.id || null;
+        DAYS_OF_WEEK.forEach(day => {
+          currentWeeklyPlan[day] = { dinner: null, breakfast: defaultBfId };
+        });
+        groceryChecks[viewedWeekKey] = [];
       });
-      checkedGroceries = [];
-      saveState();
     });
 
     document.getElementById('add-custom-btn').addEventListener('click', () => {
@@ -2136,87 +2743,657 @@
         saveState();
       }
     });
+    document.getElementById('custom-item-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('add-custom-btn').click();
+    });
 
-    document.getElementById('copy-grocery-btn').addEventListener('click', () => {
-      const categoryMap = {};
+    async function copyText(text) {
+      if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      const ok = document.execCommand('copy');
+      textarea.remove();
+      if (!ok) throw new Error('Copy failed');
+    }
 
-      function addIng(ing) {
-        const cat = ing.category || 'Pantry & Spices';
-        const name = ing.name.trim();
-        if (stockedPantryItems.includes(name)) return;
+    document.getElementById('copy-grocery-btn').addEventListener('click', async () => {
+      const checks = new Set(currentChecks());
+      let textOutput = `🛒 GROCERY LIST · ${weekTitle()} (${DAYS_OF_WEEK.length === getDaysForCurrentScope().length ? 'full week' : getDaysForCurrentScope().map(d => d.slice(0, 3)).join(', ')})\n\n`;
 
-        if (!categoryMap[cat]) categoryMap[cat] = {};
-        const isBulk = BULK_CONTAINER_UNITS.includes((ing.unit || '').toLowerCase());
-
-        if (!categoryMap[cat][name]) {
-          categoryMap[cat][name] = { 
-            amount: isBulk ? 1 : ing.amount, 
-            unit: ing.unit 
-          };
-        } else {
-          if (!isBulk && typeof ing.amount === 'number' && typeof categoryMap[cat][name].amount === 'number' && categoryMap[cat][name].unit === ing.unit) {
-            categoryMap[cat][name].amount += ing.amount;
-          }
-        }
-      }
-
-      const activeDays = getDaysForCurrentScope();
-
-      activeDays.forEach(day => {
-        const item = currentWeeklyPlan[day];
-        if (item) {
-          const dinner = dinners.find(r => r.id === item.dinner);
-          const breakfast = breakfasts.find(b => b.id === item.breakfast);
-          if (dinner && dinner.ingredients) dinner.ingredients.forEach(i => addIng(i));
-          if (breakfast && breakfast.ingredients) breakfast.ingredients.forEach(i => addIng(i));
-        }
-      });
-
-      let textOutput = `🛒 GROCERY SHOPPING LIST (${groceryScope.toUpperCase()})\n\n`;
-
-      Object.keys(categoryMap).sort().forEach(cat => {
-        const itemNames = Object.keys(categoryMap[cat]).sort();
-        if (itemNames.length > 0) {
-          textOutput += `[ ${cat.toUpperCase()} ]\n`;
-          itemNames.forEach(name => {
-            const data = categoryMap[cat][name];
-            let displayLabel = name;
-            if (data.amount !== null && data.amount !== undefined) {
-              displayLabel = `${Math.round(data.amount * 100) / 100} ${data.unit} ${name}`;
-            }
-            const isDone = checkedGroceries.includes(displayLabel) ? '✓ ' : '□ ';
-            textOutput += `${isDone}${displayLabel}\n`;
-          });
-          textOutput += `\n`;
-        }
+      buildGroceryList().forEach(group => {
+        const items = group.items.filter(i => !i.stocked);
+        if (items.length === 0) return;
+        textOutput += `[ ${group.category.toUpperCase()} ]\n`;
+        items.forEach(item => {
+          textOutput += `${item.checked ? '✓' : '□'} ${item.name}${item.qty === 'as needed' ? '' : ` (${item.qty})`}\n`;
+        });
+        textOutput += `\n`;
       });
 
       if (customGroceries.length > 0) {
         textOutput += `[ CUSTOM & EXTRAS ]\n`;
         customGroceries.forEach(item => {
-          const isDone = checkedGroceries.includes(item) ? '✓ ' : '□ ';
-          textOutput += `${isDone}${item}\n`;
+          textOutput += `${checks.has(customCheckKey(item)) ? '✓' : '□'} ${item}\n`;
         });
-        textOutput += `\n`;
       }
 
-      document.execCommand('copy');
       const btn = document.getElementById('copy-grocery-btn');
-      btn.innerHTML = '<i class="fa-solid fa-check text-emerald-500"></i>';
+      try {
+        await copyText(textOutput.trim());
+        btn.innerHTML = '<i class="fa-solid fa-check text-emerald-500"></i>';
+        showToast('Grocery list copied.');
+      } catch (err) {
+        showToast('Couldn\'t copy the list. Try again.');
+      }
       setTimeout(() => {
         btn.innerHTML = '<i class="fa-regular fa-copy"></i>';
       }, 1500);
     });
 
+    // ---------- Week navigation ----------
+    function setViewedWeek(key) {
+      viewedWeekKey = key;
+      currentWeeklyPlan = weeks[key] || createWeek();
+      updateUI();
+    }
+
+    function shiftViewedWeek(n) {
+      setViewedWeek(addWeeks(viewedWeekKey, n));
+    }
+
+    function goToCurrentWeek() {
+      setViewedWeek(getWeekKey());
+    }
+
+    function renderWeekHeader() {
+      const titleBtn = document.getElementById('week-title-btn');
+      titleBtn.innerText = weekTitle();
+      titleBtn.classList.toggle('text-brand-600', weekOffset(viewedWeekKey) !== 0);
+      const opts = { weekday: 'short', month: 'short', day: 'numeric' };
+      document.getElementById('week-range-label').innerText =
+        `${dateFromKey(viewedWeekKey).toLocaleDateString(undefined, opts)} – ${dayDate(viewedWeekKey, 6).toLocaleDateString(undefined, opts)}`;
+      renderWeekEmptyCard();
+    }
+
+    // Shown when the viewed week has no dinners yet: the "start a new week" prompt
+    function renderWeekEmptyCard() {
+      const card = document.getElementById('week-empty-card');
+      if (DAYS_OF_WEEK.some(d => currentWeeklyPlan[d]?.dinner)) {
+        card.className = 'hidden print-hide';
+        return;
+      }
+      const prevKey = addWeeks(viewedWeekKey, -1);
+      const prev = weeks[prevKey];
+      const prevHasDinners = prev && DAYS_OF_WEEK.some(d => prev[d]?.dinner);
+      const btn = 'px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition';
+      card.className = 'print-hide rounded-xl border border-dashed border-brand-300 bg-brand-50/60 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3';
+      card.innerHTML = `
+        <div>
+          <p class="text-sm font-bold text-stone-900"><i class="fa-solid fa-calendar-plus text-brand-500"></i> Nothing planned for ${esc(weekPhrase())} yet</p>
+          <p class="text-xs text-stone-500 mt-0.5">Start from ${prevHasDinners ? `${esc(weekPhrase(prevKey))}'s menu, ` : ''}a saved plan or a random mix, or pick dinners day by day below.</p>
+        </div>
+        <div class="flex flex-wrap gap-2 shrink-0">
+          ${prevHasDinners ? `<button onclick="copyPreviousWeek()" class="${btn} bg-brand-500 hover:bg-brand-600 text-white"><i class="fa-solid fa-copy"></i> Copy ${esc(weekPhrase(prevKey))}</button>` : ''}
+          ${serverMode ? `<button onclick="openHistoryModal()" class="${btn} bg-white border border-stone-200 hover:border-brand-300 text-stone-700"><i class="fa-solid fa-bookmark"></i> Saved plans</button>` : ''}
+          <button onclick="document.getElementById('autofill-btn').click()" class="${btn} bg-sage-500 hover:bg-sage-600 text-white"><i class="fa-solid fa-shuffle"></i> Autofill</button>
+        </div>
+      `;
+    }
+
+    function copyPreviousWeek() {
+      const prevKey = addWeeks(viewedWeekKey, -1);
+      const prev = weeks[prevKey];
+      if (!prev) return;
+      runUndoable(`Before copying ${weekPhrase(prevKey)}`, `Copied the menu from ${weekPhrase(prevKey)}.`, () => {
+        currentWeeklyPlan = JSON.parse(JSON.stringify(prev));
+        groceryChecks[viewedWeekKey] = [];
+        ensureBreakfastsMatchStage();
+      });
+    }
+
+    let lastSeenWeekKey = getWeekKey();
+    let lastSeenDayIndex = getTodayDayIndex();
+
+    // When the app stays open past midnight or into a new week, follow "today" forward
+    function checkDateRollover() {
+      const weekKey = getWeekKey();
+      const dayIndex = getTodayDayIndex();
+      if (weekKey === lastSeenWeekKey && dayIndex === lastSeenDayIndex) return;
+      if (viewedWeekKey === lastSeenWeekKey) viewedWeekKey = weekKey;
+      lastSeenWeekKey = weekKey;
+      lastSeenDayIndex = dayIndex;
+      currentWeeklyPlan = weeks[viewedWeekKey] || createWeek();
+      updateUI();
+    }
+
+    // ---------- History & saved plans ----------
+    function formatWhen(ts) {
+      const mins = Math.round((Date.now() - ts) / 60000);
+      const relative = mins < 1 ? 'just now'
+        : mins < 60 ? `${mins} min ago`
+        : mins < 1440 ? `${Math.round(mins / 60)} hr ago`
+        : `${Math.round(mins / 1440)} days ago`;
+      const absolute = new Date(ts).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+      return `${absolute} · ${relative}`;
+    }
+
+    async function openHistoryModal() {
+      document.getElementById('history-server-section').classList.toggle('hidden', !serverMode);
+      document.getElementById('history-local-note').classList.toggle('hidden', serverMode);
+      openModal('history-modal');
+      if (serverMode) await refreshHistoryLists();
+    }
+
+    async function refreshHistoryLists() {
+      const savedList = document.getElementById('saved-plans-list');
+      const historyList = document.getElementById('history-list');
+      savedList.innerHTML = historyList.innerHTML = '<p class="text-stone-400 italic">Loading…</p>';
+      try {
+        await flushSync();
+        const { snapshots } = await apiFetch('/api/snapshots');
+        const saved = snapshots.filter(s => s.kind === 'saved');
+        const history = snapshots.filter(s => s.kind !== 'saved');
+        savedList.innerHTML = saved.length
+          ? saved.map(snapshotCard).join('')
+          : '<p class="text-stone-400 italic">No saved plans yet. Save a week you liked so you can reuse it later.</p>';
+        historyList.innerHTML = history.length
+          ? history.map(snapshotCard).join('')
+          : '<p class="text-stone-400 italic">Nothing yet. Checkpoints appear here as the planner gets used.</p>';
+      } catch (err) {
+        savedList.innerHTML = historyList.innerHTML = '<p class="text-rose-600">Couldn\'t load history. Check the connection and try again.</p>';
+      }
+    }
+
+    function snapshotCard(snap) {
+      const summaryWeeks = snap.summary?.weeks || {};
+      const weekKey = snap.week && summaryWeeks[snap.week] ? snap.week : Object.keys(summaryWeeks).sort().pop();
+      const titles = weekKey ? summaryWeeks[weekKey] : [];
+      const menu = titles.map((t, i) => (t ? `${DAYS_OF_WEEK[i].slice(0, 3)}: ${t}` : null)).filter(Boolean).join(' · ');
+      const isSaved = snap.kind === 'saved';
+      const icon = isSaved ? 'fa-bookmark text-brand-500' : snap.kind === 'undo' ? 'fa-rotate-left text-amber-500' : 'fa-clock text-stone-400';
+      return `
+        <div class="p-3 rounded-xl border border-stone-200 hover:border-stone-300 bg-white flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5 font-bold text-stone-800"><i class="fa-solid ${icon}"></i> <span class="truncate">${esc(snap.label)}</span></div>
+            <p class="text-[10px] text-stone-400 mt-0.5">${esc(formatWhen(snap.created_at))}${weekKey ? ` · menu for the week of ${esc(formatShortDate(dateFromKey(weekKey)))}` : ''}</p>
+            <p class="text-[11px] text-stone-500 mt-1 line-clamp-2">${menu ? esc(menu) : 'No dinners planned at this point'}</p>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            ${isSaved ? `
+              <button onclick="loadSavedPlan(${Number(snap.id)})" class="px-2.5 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-lg font-semibold whitespace-nowrap" title="Fill ${esc(weekPhrase())} with this plan">Load</button>
+              <button onclick="deleteSnapshot(${Number(snap.id)})" class="p-1.5 text-stone-300 hover:text-rose-600" title="Delete this saved plan"><i class="fa-solid fa-trash-can"></i></button>
+            ` : `
+              <button onclick="restoreSnapshot(${Number(snap.id)})" class="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg font-semibold whitespace-nowrap" title="Roll everything back to this moment">Restore</button>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    document.getElementById('save-plan-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('save-plan-name');
+      const label = input.value.trim();
+      if (!label) return;
+      weeks[viewedWeekKey] = currentWeeklyPlan;
+      writeLocalCache();
+      try {
+        await flushSync();
+        await apiFetch('/api/snapshots', { method: 'POST', body: JSON.stringify({ label, week: viewedWeekKey }) });
+        input.value = '';
+        showToast(`Saved "${label}".`);
+        refreshHistoryLists();
+      } catch (err) {
+        showToast('Couldn\'t save the plan. Check the connection and try again.');
+      }
+    });
+
+    async function fetchSnapshot(id) {
+      try {
+        return await apiFetch(`/api/snapshots/${id}`);
+      } catch (err) {
+        showToast('Couldn\'t load that entry. Check the connection and try again.');
+        return null;
+      }
+    }
+
+    async function loadSavedPlan(id) {
+      const snap = await fetchSnapshot(id);
+      if (!snap) return;
+      const data = snap.data || {};
+      const weekKeys = Object.keys(data).filter(k => k.startsWith('week:')).sort();
+      const sourceKey = snap.week && data['week:' + snap.week] ? 'week:' + snap.week : weekKeys.pop();
+      const plan = sourceKey && data[sourceKey];
+      if (!plan) return showToast('That saved plan doesn\'t contain a week.');
+
+      runUndoable(`Before loading "${snap.label}"`, `Loaded "${snap.label}" into ${weekPhrase()}.`, () => {
+        // Bring back any recipe the plan uses that was deleted after it was saved
+        DAYS_OF_WEEK.forEach(day => {
+          const slot = plan[day] || {};
+          if (slot.dinner && !dinners.some(r => r.id === slot.dinner)) {
+            const recipe = (data.dinners || []).find(r => r.id === slot.dinner);
+            if (recipe) dinners.push(recipe);
+          }
+          if (slot.breakfast && !breakfasts.some(b => b.id === slot.breakfast)) {
+            const recipe = (data.breakfasts || []).find(b => b.id === slot.breakfast);
+            if (recipe) breakfasts.push(recipe);
+          }
+        });
+        currentWeeklyPlan = JSON.parse(JSON.stringify(plan));
+        groceryChecks[viewedWeekKey] = [];
+        ensureBreakfastsMatchStage();
+      });
+      closeModal('history-modal');
+    }
+
+    async function restoreSnapshot(id) {
+      const snap = await fetchSnapshot(id);
+      if (!snap) return;
+      const when = new Date(snap.created_at).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+      runUndoable(`Before restoring the ${when} checkpoint`, `Restored everything to ${when}.`, () => {
+        const data = snap.data || {};
+        Object.keys(getSyncedState()).forEach(k => { if (!(k in data)) setSyncedValue(k, undefined); });
+        Object.entries(data).forEach(([k, v]) => setSyncedValue(k, v));
+        currentWeeklyPlan = weeks[viewedWeekKey] || createWeek();
+      });
+      closeModal('history-modal');
+    }
+
+    async function deleteSnapshot(id) {
+      if (!confirm('Delete this saved plan? This can\'t be undone.')) return;
+      try {
+        await apiFetch(`/api/snapshots/${id}`, { method: 'DELETE' });
+        refreshHistoryLists();
+      } catch (err) {
+        showToast('Couldn\'t delete it. Check the connection and try again.');
+      }
+    }
+
+    // ---------- Colour themes (per device) ----------
+    const THEME_STORAGE_KEY = 'planner_theme_v1';
+    const THEME_DEFAULTS = { brand: '#e07a5f', sage: '#819885' };
+    const THEME_PRESETS = [
+      ['Terracotta', '#e07a5f'], ['Berry', '#d6457a'], ['Plum', '#9b4f96'], ['Lavender', '#8b6fd6'], ['Ocean', '#3b82c4'],
+      ['Teal', '#1f9e9a'], ['Sage', '#819885'], ['Forest', '#3f9a6b'], ['Sunflower', '#d99a1e'], ['Slate', '#5b6b7f']
+    ];
+    // Each shade is the chosen colour mixed toward white (lighter) or black (darker)
+    const SHADE_MIX = {
+      50: [255, 0.94], 100: [255, 0.86], 200: [255, 0.68], 300: [255, 0.48], 400: [255, 0.24],
+      500: null, 600: [0, 0.12], 700: [0, 0.26]
+    };
+
+    function hexToRgb(hex) {
+      const n = parseInt(hex.slice(1), 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    }
+
+    function themeVars(name, hex) {
+      const base = hexToRgb(hex);
+      const vars = {};
+      Object.entries(SHADE_MIX).forEach(([shade, mix]) => {
+        const rgb = mix ? base.map(c => Math.round(c + (mix[0] - c) * mix[1])) : base;
+        vars[`--${name}-${shade}`] = rgb.join(' ');
+      });
+      return vars;
+    }
+
+    function loadTheme() {
+      const saved = readLocal(THEME_STORAGE_KEY, null);
+      return { brand: saved?.brand || THEME_DEFAULTS.brand, sage: saved?.sage || THEME_DEFAULTS.sage };
+    }
+
+    function applyTheme(theme) {
+      const rootStyle = document.documentElement.style;
+      const vars = {};
+      ['brand', 'sage'].forEach(name => {
+        Object.keys(SHADE_MIX).forEach(shade => rootStyle.removeProperty(`--${name}-${shade}`));
+        // The default colours use the hand-tuned shades in the stylesheet
+        if (theme[name].toLowerCase() !== THEME_DEFAULTS[name]) Object.assign(vars, themeVars(name, theme[name]));
+      });
+      Object.entries(vars).forEach(([k, v]) => rootStyle.setProperty(k, v));
+      localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify({ ...theme, vars }));
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', theme.brand);
+    }
+
+    function setThemeColor(name, hex) {
+      const theme = loadTheme();
+      theme[name] = hex.toLowerCase();
+      applyTheme(theme);
+      renderThemeSwatches();
+    }
+
+    function resetTheme() {
+      applyTheme({ ...THEME_DEFAULTS });
+      renderThemeSwatches();
+    }
+
+    function openThemeModal() {
+      renderThemeSwatches();
+      openModal('theme-modal');
+    }
+
+    function renderThemeSwatches() {
+      const theme = loadTheme();
+      ['brand', 'sage'].forEach(name => {
+        const current = theme[name].toLowerCase();
+        document.getElementById(`${name}-color-input`).value = current;
+        document.getElementById(`${name}-swatches`).innerHTML = THEME_PRESETS.map(([label, hex]) => `
+          <button type="button" onclick="setThemeColor('${name}', '${hex}')" title="${label}" aria-label="${label}"
+            class="w-9 h-9 rounded-full border-2 transition flex items-center justify-center ${current === hex ? 'border-stone-900 scale-110' : 'border-white shadow hover:scale-105'}"
+            style="background:${hex}">
+            ${current === hex ? '<i class="fa-solid fa-check text-white text-xs"></i>' : ''}
+          </button>
+        `).join('');
+      });
+    }
+
+    // ---------- Server sync ----------
+    // Only active on the signed-in site, where the Worker embeds window.__PLANNER_BOOT__.
+    // Opened from GitHub Pages or as a file, the planner stays local-only like before.
+    const SYNC_META_KEY = 'planner_sync_v1';
+    let serverMode = false;
+    let serverVersion = 0;
+    let lastBootAt = 0;
+    let lastSynced = {};      // key -> JSON the server is known to hold
+    let pendingSnapshot = null;
+    let pushTimer = null;
+    let pushing = false;
+    let pushAgain = false;
+    let pushEpoch = 0;
+
+    function getSyncedState() {
+      const state = { dinners, breakfasts, stockedPantryItems, clearedAllergens, customGroceries, babyBirthdate, selectedStageKey, stageOverride };
+      Object.keys(weeks).forEach(k => { state['week:' + k] = weeks[k]; });
+      Object.keys(groceryChecks).forEach(k => { state['checks:' + k] = groceryChecks[k]; });
+      return state;
+    }
+
+    // value === undefined removes a week or checks entry
+    function setSyncedValue(key, value) {
+      if (key.startsWith('week:')) {
+        if (value === undefined) delete weeks[key.slice(5)];
+        else weeks[key.slice(5)] = value;
+        return;
+      }
+      if (key.startsWith('checks:')) {
+        if (value === undefined) delete groceryChecks[key.slice(7)];
+        else groceryChecks[key.slice(7)] = value;
+        return;
+      }
+      if (value === undefined) return;
+      switch (key) {
+        case 'dinners': dinners = value; break;
+        case 'breakfasts': breakfasts = value; break;
+        case 'stockedPantryItems': stockedPantryItems = value; break;
+        case 'clearedAllergens': clearedAllergens = value; break;
+        case 'customGroceries': customGroceries = value; break;
+        case 'babyBirthdate': babyBirthdate = value; break;
+        case 'selectedStageKey': selectedStageKey = value; break;
+        case 'stageOverride': stageOverride = value; break;
+      }
+    }
+
+    function dirtyChanges() {
+      const current = getSyncedState();
+      const changes = {};
+      const sent = {};
+      Object.keys(current).forEach(k => {
+        const json = JSON.stringify(current[k]);
+        if (json !== lastSynced[k]) {
+          changes[k] = current[k];
+          sent[k] = json;
+        }
+      });
+      Object.keys(lastSynced).forEach(k => {
+        if (!(k in current)) {
+          changes[k] = null;
+          sent[k] = undefined;
+        }
+      });
+      return { changes, sent };
+    }
+
+    function hasDirty() {
+      return Object.keys(dirtyChanges().changes).length > 0;
+    }
+
+    function saveSyncMeta() {
+      if (!serverMode) return;
+      localStorage.setItem(SYNC_META_KEY, JSON.stringify({ version: serverVersion, bootServedAt: lastBootAt, lastSynced }));
+    }
+
+    function setSyncStatus(status) {
+      if (!serverMode) return;
+      const styles = {
+        saved: ['bg-emerald-50 text-emerald-700 border-emerald-200', 'fa-cloud', 'Synced', 'All changes are saved and shared'],
+        saving: ['bg-stone-50 text-stone-500 border-stone-200', 'fa-arrows-rotate fa-spin', 'Saving…', 'Saving changes'],
+        offline: ['bg-amber-50 text-amber-800 border-amber-200', 'fa-cloud-arrow-up', 'Offline', 'Changes are kept on this device and will sync when the connection is back']
+      };
+      const [cls, icon, text, title] = styles[status];
+      const el = document.getElementById('sync-status');
+      el.className = `px-2 py-1 rounded-full text-[10px] font-bold border inline-flex items-center gap-1 ${cls}`;
+      el.innerHTML = `<i class="fa-solid ${icon}"></i> ${text}`;
+      el.title = title;
+    }
+
+    async function apiFetch(path, options = {}) {
+      const res = await fetch(path, {
+        ...options,
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' }
+      });
+      if (res.status === 401) {
+        window.location.href = '/login';
+        throw new Error('Signed out');
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    }
+
+    function scheduleSync() {
+      saveSyncMeta();
+      if (!serverMode) return;
+      setSyncStatus('saving');
+      clearTimeout(pushTimer);
+      pushTimer = setTimeout(pushChanges, 400);
+    }
+
+    async function pushChanges() {
+      if (!serverMode) return;
+      if (pushing) {
+        pushAgain = true;
+        return;
+      }
+      clearTimeout(pushTimer);
+      const { changes, sent } = dirtyChanges();
+      const snapshot = pendingSnapshot;
+      if (Object.keys(changes).length === 0) {
+        pendingSnapshot = null;
+        setSyncStatus('saved');
+        return;
+      }
+      pushing = true;
+      setSyncStatus('saving');
+      try {
+        const res = await apiFetch('/api/state', {
+          method: 'PUT',
+          body: JSON.stringify({ changes, snapshot: snapshot ? snapshot.label : undefined, week: snapshot ? snapshot.week : viewedWeekKey })
+        });
+        Object.entries(sent).forEach(([k, json]) => {
+          if (json === undefined) delete lastSynced[k];
+          else lastSynced[k] = json;
+        });
+        if (pendingSnapshot === snapshot) pendingSnapshot = null;
+        pushEpoch++;
+        // A jump of more than one version means another device saved in between
+        const otherDeviceWrote = res.version !== serverVersion + 1;
+        if (!otherDeviceWrote) serverVersion = res.version;
+        saveSyncMeta();
+        setSyncStatus(hasDirty() ? 'saving' : 'saved');
+        if (otherDeviceWrote) setTimeout(pullState, 0);
+      } catch (err) {
+        setSyncStatus('offline');
+        clearTimeout(pushTimer);
+        pushTimer = setTimeout(pushChanges, 15000);
+      } finally {
+        pushing = false;
+        if (pushAgain) {
+          pushAgain = false;
+          pushChanges();
+        }
+      }
+    }
+
+    async function flushSync() {
+      if (!serverMode) return;
+      while (pushing) await new Promise(resolve => setTimeout(resolve, 100));
+      await pushChanges();
+      if (hasDirty()) throw new Error('Not synced');
+    }
+
+    async function pullState() {
+      if (!serverMode || document.hidden || pushing) return;
+      // Re-rendering would close a breakfast dropdown someone has open
+      const active = document.activeElement;
+      if (active && active.tagName === 'SELECT' && active.closest('#days-container')) return;
+      const epoch = pushEpoch;
+      try {
+        const res = await apiFetch(`/api/state?since=${serverVersion}`);
+        // Ignore answers that raced with our own save; the next poll will be current
+        if (epoch !== pushEpoch || pushing || res.version < serverVersion) return;
+        if (res.unchanged) {
+          setSyncStatus(hasDirty() ? 'saving' : 'saved');
+          return;
+        }
+        applyRemoteState(res.state, res.version);
+      } catch (err) {
+        setSyncStatus('offline');
+      }
+    }
+
+    // Adopt the server copy, except keys with local edits that haven't been saved yet
+    function applyRemoteState(remote, version) {
+      const current = getSyncedState();
+      const dirty = new Set(Object.keys(dirtyChanges().changes));
+      let changed = false;
+      new Set([...Object.keys(remote), ...Object.keys(lastSynced), ...Object.keys(current)]).forEach(k => {
+        const remoteJson = k in remote ? JSON.stringify(remote[k]) : undefined;
+        if (!dirty.has(k) && JSON.stringify(current[k]) !== remoteJson) {
+          setSyncedValue(k, k in remote ? remote[k] : undefined);
+          changed = true;
+        }
+        if (remoteJson === undefined) delete lastSynced[k];
+        else lastSynced[k] = remoteJson;
+      });
+      serverVersion = version;
+      currentWeeklyPlan = weeks[viewedWeekKey] || createWeek();
+      if (changed) {
+        writeLocalCache();
+        updateUI();
+      }
+      saveSyncMeta();
+      if (dirty.size) scheduleSync();
+      else setSyncStatus('saved');
+    }
+
+    function initSync() {
+      const boot = window.__PLANNER_BOOT__;
+      if (!boot) return;
+      serverMode = true;
+      const meta = readLocal(SYNC_META_KEY, null);
+      if (meta && meta.lastSynced) {
+        lastSynced = meta.lastSynced;
+        serverVersion = meta.version || 0;
+        lastBootAt = meta.bootServedAt || 0;
+      } else {
+        // First visit on this device: the server copy wins over the built-in defaults
+        Object.entries(getSyncedState()).forEach(([k, v]) => { lastSynced[k] = JSON.stringify(v); });
+      }
+      if (boot.version === 0) {
+        // Empty database: this device seeds it
+        lastSynced = {};
+        serverVersion = 0;
+      } else if (boot.servedAt > lastBootAt) {
+        applyRemoteState(boot.state, boot.version);
+      }
+      // Otherwise the page came from the offline cache and local data is newer; the next pull catches up
+      lastBootAt = Math.max(lastBootAt, boot.servedAt || 0);
+      saveSyncMeta();
+    }
+
+    function syncTick() {
+      if (document.hidden) return;
+      if (hasDirty() && !pushing) pushChanges();
+      pullState();
+    }
+
+    function startSync() {
+      document.getElementById('logout-form').classList.remove('hidden');
+      setSyncStatus(hasDirty() ? 'saving' : 'saved');
+      if (hasDirty()) scheduleSync();
+      setInterval(syncTick, 10000);
+      document.addEventListener('visibilitychange', syncTick);
+      window.addEventListener('focus', syncTick);
+      window.addEventListener('online', syncTick);
+      if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+
+      document.getElementById('logout-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try { await flushSync(); } catch (err) {}
+        // Drop the offline copy of the page so nothing shows after signing out
+        try {
+          if (window.caches) await Promise.all((await caches.keys()).map(k => caches.delete(k)));
+        } catch (err) {}
+        localStorage.removeItem(SYNC_META_KEY);
+        e.target.submit();
+      });
+    }
+
+    // ---------- Modals & printing ----------
+    const FORM_MODALS = ['dinner-form-modal', 'breakfast-form-modal'];
+
+    function closeAnyModal(modal) {
+      if (modal.id === 'cook-mode-modal') closeCookMode();
+      else closeModal(modal.id);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const open = [...document.querySelectorAll('.fixed.inset-0:not(.hidden)')].pop();
+      if (open) closeAnyModal(open);
+    });
+
+    // Backdrop clicks close list-style modals, but not the recipe forms (typing would be lost)
+    document.querySelectorAll('.fixed.inset-0').forEach(modal => {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal && !FORM_MODALS.includes(modal.id)) closeAnyModal(modal);
+      });
+    });
+
+    function printSection(which) {
+      document.body.classList.add(which === 'week' ? 'print-week' : 'print-grocery');
+      window.print();
+    }
+    window.addEventListener('afterprint', () => document.body.classList.remove('print-week', 'print-grocery'));
+
     // Check if birthdate is already present and calculate initial stage on load
+    initSync();
     const computedInitialMonths = calculateBabyAgeMonths(babyBirthdate);
-    if (computedInitialMonths !== null) {
+    if (computedInitialMonths !== null && !stageOverride) {
       selectedStageKey = determineStageFromAge(computedInitialMonths);
     }
     ensureBreakfastsMatchStage();
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', loadTheme().brand);
 
     // Initial render
     updateUI();
+    setInterval(checkDateRollover, 60000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) checkDateRollover(); });
+    if (serverMode) startSync();
   </script>
 </body>
 </html>
