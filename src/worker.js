@@ -17,7 +17,7 @@ const MAX_BODY_BYTES = 2 * 1024 * 1024;
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 const STATIC_KEYS = new Set([
-  'dinners', 'breakfasts', 'stockedPantryItems', 'clearedAllergens', 'customGroceries',
+  'dinners', 'breakfasts', 'stockedPantryItems', 'clearedAllergens', 'customGroceries', 'recentExtras',
   'babyBirthdate', 'selectedStageKey', 'stageOverride'
 ]);
 const isValidKey = key => STATIC_KEYS.has(key) || /^(week|checks):\d{4}-\d{2}-\d{2}$/.test(key);

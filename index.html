@@ -64,6 +64,7 @@
 
   <!-- Autocomplete Shared Datalists -->
   <datalist id="known-ingredients-list"></datalist>
+  <datalist id="grocery-suggestions-list"></datalist>
   <datalist id="cooking-types-list">
     <option value="Sheet Pan"></option>
     <option value="One-Skillet"></option>
@@ -243,7 +244,7 @@
 
         <!-- Custom Item Input -->
         <div class="flex gap-1.5 mb-4 print-hide">
-          <input id="custom-item-input" type="text" placeholder="Add extra staple (e.g. 1 bag coffee)..." class="w-full text-xs rounded-lg border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none" />
+          <input id="custom-item-input" type="text" list="grocery-suggestions-list" autocomplete="off" placeholder="Add extra staple (e.g. 1 bag coffee)..." class="w-full text-xs rounded-lg border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none" />
           <button id="add-custom-btn" class="px-3 py-2 bg-stone-800 hover:bg-stone-900 text-white rounded-lg text-xs font-semibold">
             Add
           </button>
@@ -518,7 +519,8 @@
           <h4><i class="fa-solid fa-book-open text-brand-500"></i> Recipes</h4>
           <ul>
             <li><strong>Dinners</strong> and <strong>Breakfasts</strong> open the recipe boxes, where you can add, edit and delete recipes.</li>
-            <li>Ingredient names suggest existing ones as you type. Reusing the same name lets the grocery list combine it properly.</li>
+            <li>Ingredient names suggest ones already used in other recipes. Picking one fills in its usual unit, aisle and amount (the amount only if you haven't typed one), and a note underneath shows how many recipes use it.</li>
+            <li>If you type a name that differs from an existing one only by capitals or plurals, like "sweet potato", it's saved with the existing spelling so the grocery list combines it properly.</li>
             <li>Tags mark allergens and nutrition for the radar. Each breakfast also has a minimum stage, which controls when it unlocks.</li>
           </ul>
         </section>
@@ -546,7 +548,7 @@
             <li><strong>Full Week</strong>, <strong>Rest of Week</strong> and <strong>Today Only</strong> narrow the list. They appear when you're viewing this week.</li>
             <li>Tick items as you shop. Ticks are kept per week and stay put if a quantity changes.</li>
             <li>The box icon moves an item to <strong>Already in pantry</strong> for every week. Use <strong>Unstash</strong> to bring it back.</li>
-            <li>Add extras like coffee in the box at the top. The copy icon puts the list on the clipboard for texting, and the printer icon prints it.</li>
+            <li>Add extras like coffee in the box at the top; it suggests extras you've added before. The copy icon puts the list on the clipboard for texting, and the printer icon prints it.</li>
           </ul>
         </section>
         <section id="help-data-section"></section>
@@ -1372,6 +1374,8 @@
     let stockedPantryItems = readLocal('family_stocked_pantry_v10', []);
     let clearedAllergens = readLocal('family_cleared_allergens_v10', ['Peanut']);
     let customGroceries = readLocal('family_custom_groceries_v10', []);
+    // Extras typed before (most recent first), suggested again in the "extra staple" box
+    let recentExtras = readLocal('family_recent_extras_v11', null) || [...customGroceries];
     let groceryScope = localStorage.getItem('family_grocery_scope_v10') || 'full';
 
     // Pediatric Stage Engine State
@@ -1406,6 +1410,7 @@
       localStorage.setItem('family_stocked_pantry_v10', JSON.stringify(stockedPantryItems));
       localStorage.setItem('family_cleared_allergens_v10', JSON.stringify(clearedAllergens));
       localStorage.setItem('family_custom_groceries_v10', JSON.stringify(customGroceries));
+      localStorage.setItem('family_recent_extras_v11', JSON.stringify(recentExtras));
       localStorage.setItem('family_grocery_scope_v10', groceryScope);
       localStorage.setItem('family_baby_birthdate_v10', babyBirthdate);
       localStorage.setItem('family_baby_stage_v10', selectedStageKey);
@@ -1574,30 +1579,76 @@
       `;
     }
 
-    function getKnownIngredientMap() {
-      const map = {};
+    // Per-ingredient summary across all recipes, grouped the same way the grocery list merges items.
+    // Most-common name, unit, aisle and amount win; the recipe being edited can be left out so its
+    // own old spelling doesn't block a rename.
+    function getIngredientStats(excludeRecipeId = null) {
+      const stats = {};
+      const tally = (counts, value) => { counts.set(value, (counts.get(value) || 0) + 1); };
+      const top = counts => [...counts.entries()].reduce((best, entry) => (entry[1] > best[1] ? entry : best), [null, 0])[0];
       [...dinners, ...breakfasts].forEach(recipe => {
-        if (recipe.ingredients) {
-          recipe.ingredients.forEach(i => {
-            const key = i.name.trim();
-            if (!map[key]) {
-              map[key] = { unit: i.unit, category: i.category };
-            }
-          });
-        }
+        if (excludeRecipeId && recipe.id === excludeRecipeId) return;
+        const seen = new Set();
+        (recipe.ingredients || []).forEach(i => {
+          const name = (i.name || '').trim();
+          if (!name) return;
+          const key = groceryKey(name);
+          const s = stats[key] || (stats[key] = { names: new Map(), units: new Map(), categories: new Map(), amounts: new Map(), recipes: 0 });
+          if (!seen.has(key)) {
+            s.recipes++;
+            seen.add(key);
+          }
+          const unit = i.unit || 'as needed';
+          tally(s.names, name);
+          tally(s.units, unit);
+          tally(s.categories, i.category || 'Pantry & Spices');
+          tally(s.amounts, `${unit}|${typeof i.amount === 'number' && i.amount > 0 ? i.amount : ''}`);
+        });
       });
-      return map;
+      Object.values(stats).forEach(s => {
+        s.name = top(s.names);
+        s.unit = top(s.units);
+        s.category = top(s.categories);
+        const amounts = new Map([...s.amounts].filter(([k]) => k.startsWith(s.unit + '|')));
+        const amount = (top(amounts) || '').split('|')[1];
+        s.amount = amount ? Number(amount) : null;
+      });
+      return stats;
+    }
+
+    function describeUsualAmount(s) {
+      if (s.unit === 'as needed') return 'usually as needed';
+      if (s.amount === null) return `usually by the ${s.unit}`;
+      return `usually ${formatAmount(s.amount)}${s.unit === 'whole' ? '' : ' ' + s.unit}`;
+    }
+
+    // Swap a typed name for the existing spelling when they differ only by capitals or plurals
+    function canonicalIngredientName(name, stats) {
+      const match = stats[groceryKey(name)];
+      return match ? match.name : name;
+    }
+
+    function fillDatalist(id, values) {
+      const datalist = document.getElementById(id);
+      datalist.innerHTML = '';
+      values.forEach(value => {
+        const option = document.createElement('option');
+        option.value = value;
+        datalist.appendChild(option);
+      });
     }
 
     function refreshAutocompleteDatalist() {
-      const datalist = document.getElementById('known-ingredients-list');
-      datalist.innerHTML = '';
-      const map = getKnownIngredientMap();
-      Object.keys(map).sort().forEach(name => {
-        const option = document.createElement('option');
-        option.value = name;
-        datalist.appendChild(option);
-      });
+      const ingredientNames = Object.values(getIngredientStats()).map(s => s.name).sort((a, b) => a.localeCompare(b));
+      fillDatalist('known-ingredients-list', ingredientNames);
+      // The "extra staple" box suggests past extras first, then ingredients, without repeats
+      const seen = new Set();
+      fillDatalist('grocery-suggestions-list', [...recentExtras, ...ingredientNames].filter(value => {
+        const key = value.trim().toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }));
     }
 
     function updateUI() {
@@ -2494,37 +2545,74 @@
       }
     }
 
+    function setSelectValue(select, value) {
+      if (![...select.options].some(o => o.value === value)) select.add(new Option(value, value));
+      select.value = value;
+    }
+
+    function editingRecipeId(containerId) {
+      return document.getElementById(containerId === 'dinner-ing-rows' ? 'din-edit-id' : 'bf-edit-id').value || null;
+    }
+
     // Dynamic Ingredient Row
     function addIngredientRow(containerId, name = '', amount = '', unit = 'whole', category = 'Produce') {
       const container = document.getElementById(containerId);
       const row = document.createElement('div');
-      row.className = 'flex items-center gap-1.5 ing-row';
+      row.className = 'ing-row';
       
       row.innerHTML = `
-        <input type="text" list="known-ingredients-list" placeholder="Item name..." value="${esc(name)}" class="ing-name flex-1 text-xs rounded-lg border border-stone-300 px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-500" required />
-        <input type="number" step="any" placeholder="Qty" value="${esc(amount)}" class="ing-amount w-14 text-xs rounded-lg border border-stone-300 px-1.5 py-1.5 focus:outline-none text-center" />
-        <select class="ing-unit text-[11px] rounded-lg border border-stone-300 px-1 py-1.5 focus:outline-none bg-white">
-          ${[...new Set([...STANDARD_UNITS, unit])].map(u => `<option value="${esc(u)}" ${u === unit ? 'selected' : ''}>${esc(u)}</option>`).join('')}
-        </select>
-        <select class="ing-cat text-[11px] rounded-lg border border-stone-300 px-1 py-1.5 focus:outline-none bg-white">
-          ${[...new Set([...AISLES, category])].map(a => `<option value="${esc(a)}" ${a === category ? 'selected' : ''}>${esc(a)}</option>`).join('')}
-        </select>
-        <button type="button" onclick="this.parentElement.remove()" class="text-stone-300 hover:text-rose-500 p-1">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+        <div class="flex items-center gap-1.5">
+          <input type="text" list="known-ingredients-list" placeholder="Item name..." value="${esc(name)}" class="ing-name flex-1 min-w-0 text-xs rounded-lg border border-stone-300 px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-500" required />
+          <input type="number" step="any" placeholder="Qty" value="${esc(amount)}" class="ing-amount w-14 text-xs rounded-lg border border-stone-300 px-1.5 py-1.5 focus:outline-none text-center" />
+          <select class="ing-unit text-[11px] rounded-lg border border-stone-300 px-1 py-1.5 focus:outline-none bg-white">
+            ${[...new Set([...STANDARD_UNITS, unit])].map(u => `<option value="${esc(u)}" ${u === unit ? 'selected' : ''}>${esc(u)}</option>`).join('')}
+          </select>
+          <select class="ing-cat text-[11px] rounded-lg border border-stone-300 px-1 py-1.5 focus:outline-none bg-white">
+            ${[...new Set([...AISLES, category])].map(a => `<option value="${esc(a)}" ${a === category ? 'selected' : ''}>${esc(a)}</option>`).join('')}
+          </select>
+          <button type="button" onclick="this.closest('.ing-row').remove()" class="text-stone-300 hover:text-rose-500 p-1">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <p class="ing-hint hidden text-[10px] text-stone-400 mt-0.5 pl-1"></p>
       `;
 
       const nameInput = row.querySelector('.ing-name');
+      const amountInput = row.querySelector('.ing-amount');
       const unitSelect = row.querySelector('.ing-unit');
       const catSelect = row.querySelector('.ing-cat');
+      const hint = row.querySelector('.ing-hint');
+      // Starter rows come with placeholder amounts; those may be replaced by the ingredient's usual amount
+      let amountIsPlaceholder = !name;
+      amountInput.addEventListener('input', () => { amountIsPlaceholder = false; });
 
-      nameInput.addEventListener('input', (e) => {
-        const val = e.target.value.trim();
-        const map = getKnownIngredientMap();
-        if (map[val]) {
-          if (map[val].unit) unitSelect.value = map[val].unit;
-          if (map[val].category) catSelect.value = map[val].category;
+      const showHint = () => {
+        const val = nameInput.value.trim();
+        const match = val && getIngredientStats(editingRecipeId(containerId))[groceryKey(val)];
+        if (!val) {
+          hint.classList.add('hidden');
+          return;
         }
+        hint.classList.remove('hidden');
+        hint.textContent = match
+          ? `Used in ${match.recipes} other recipe${match.recipes === 1 ? '' : 's'} · ${describeUsualAmount(match)}${match.name !== val ? ` · will be saved as "${match.name}"` : ''}`
+          : editingRecipeId(containerId) ? 'Not used in any other recipe' : 'New ingredient';
+      };
+
+      nameInput.addEventListener('input', () => {
+        const match = getIngredientStats(editingRecipeId(containerId))[groceryKey(nameInput.value.trim())];
+        if (match) {
+          setSelectValue(unitSelect, match.unit);
+          setSelectValue(catSelect, match.category);
+          if (amountInput.value === '' || amountIsPlaceholder) amountInput.value = match.amount ?? '';
+        }
+        showHint();
+      });
+
+      nameInput.addEventListener('change', () => {
+        const val = nameInput.value.trim();
+        if (val) nameInput.value = canonicalIngredientName(val, getIngredientStats(editingRecipeId(containerId)));
+        showHint();
       });
 
       catSelect.addEventListener('change', (e) => {
@@ -2535,6 +2623,7 @@
       });
 
       container.appendChild(row);
+      if (name) showHint();
     }
 
     function openCreateDinnerModal() {
@@ -2558,8 +2647,9 @@
       const instructions = document.getElementById('din-input-instructions').value.trim();
 
       const ingredients = [];
+      const dinnerStats = getIngredientStats(editId || null);
       document.querySelectorAll('#dinner-ing-rows .ing-row').forEach(row => {
-        const name = row.querySelector('.ing-name').value.trim();
+        const name = canonicalIngredientName(row.querySelector('.ing-name').value.trim(), dinnerStats);
         const rawAmt = row.querySelector('.ing-amount').value;
         const amount = rawAmt ? parseFloat(rawAmt) : null;
         const unit = row.querySelector('.ing-unit').value || 'as needed';
@@ -2618,8 +2708,9 @@
       const tags = document.getElementById('bf-input-tags').value.split(',').map(t => t.trim()).filter(Boolean);
 
       const ingredients = [];
+      const breakfastStats = getIngredientStats(editId || null);
       document.querySelectorAll('#breakfast-ing-rows .ing-row').forEach(row => {
-        const name = row.querySelector('.ing-name').value.trim();
+        const name = canonicalIngredientName(row.querySelector('.ing-name').value.trim(), breakfastStats);
         const rawAmt = row.querySelector('.ing-amount').value;
         const amount = rawAmt ? parseFloat(rawAmt) : null;
         const unit = row.querySelector('.ing-unit').value || 'as needed';
@@ -2724,6 +2815,7 @@
         stockedPantryItems,
         clearedAllergens,
         customGroceries,
+        recentExtras,
         groceryScope,
         babyBirthdate,
         selectedStageKey,
@@ -2773,6 +2865,7 @@
           stockedPantryItems = parsed.stockedPantryItems || [];
           clearedAllergens = parsed.clearedAllergens || ['Peanut'];
           customGroceries = parsed.customGroceries || [];
+          recentExtras = parsed.recentExtras || [...new Set([...recentExtras, ...customGroceries])].slice(0, 50);
           groceryScope = parsed.groceryScope || 'full';
           babyBirthdate = parsed.babyBirthdate || '';
           selectedStageKey = parsed.selectedStageKey || 'stage_1';
@@ -2822,6 +2915,7 @@
       const val = input.value.trim();
       if (val) {
         customGroceries.push(val);
+        recentExtras = [val, ...recentExtras.filter(x => x.trim().toLowerCase() !== val.toLowerCase())].slice(0, 50);
         input.value = '';
         saveState();
       }
@@ -3097,35 +3191,39 @@
     }
 
     // ---------- Help ----------
-    // The data section depends on whether this copy syncs through the server or only keeps browser storage
     function openHelpModal() {
-      const dataSection = document.getElementById('help-data-section');
-      const historyItem = document.getElementById('help-history-item');
-      if (serverMode) {
-        dataSection.innerHTML = `
-          <h4><i class="fa-solid fa-cloud text-brand-500"></i> How your data is saved</h4>
-          <ul>
-            <li>Every change saves on its own within a second. There's no save button.</li>
-            <li>Everyone signed in with the household password shares the same planner. Changes show up on other devices within about 10 seconds, or as soon as the app is reopened.</li>
-            <li>The badge in the header shows <strong>Synced</strong>, <strong>Saving…</strong> or <strong>Offline</strong>.</li>
-            <li>Each device also keeps its own copy, so the planner opens and works without a connection. Changes made offline sync when the connection is back.</li>
-            <li>If two people change different things at the same time, both changes are kept. If they change the same thing (for example the same week's plan), the last save wins.</li>
-            <li>Colours and the grocery range (Full Week, Rest of Week, Today Only) are set per device and aren't shared.</li>
-            <li>Signing out (the arrow icon in the header) removes the offline copy of the page from that device. You stay signed in for about 6 months otherwise.</li>
-          </ul>
-        `;
-        historyItem.innerHTML = `<strong>History</strong> keeps automatic checkpoints: one before each of those actions and one at the start of each editing session (the last 50 are kept). <strong>Restore</strong> rolls everything back to that moment, and can itself be undone. <strong>Saved plans</strong> let you name a week you liked and load it into any week later; recipes deleted since are brought back.`;
-      } else {
-        dataSection.innerHTML = `
-          <h4><i class="fa-solid fa-hard-drive text-brand-500"></i> How your data is saved</h4>
-          <ul>
-            <li>This copy of the planner saves only in this browser, on this device. Every change saves on its own, but nothing is shared with other devices.</li>
-            <li>Clearing your browser data erases it, so use <strong>Download backup</strong> in History now and then.</li>
-            <li>The signed-in household planner saves to the cloud, shares one planner across devices, and keeps automatic history.</li>
-          </ul>
-        `;
-        historyItem.innerHTML = `Automatic history and saved plans are only available on the signed-in household planner.`;
-      }
+      // Both ways of running the planner are explained; the one this page is using gets a badge
+      const youAreHere = active => active
+        ? '<span class="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-500 text-white">You\'re using this one</span>'
+        : '';
+      const box = active => `p-2.5 rounded-lg border ${active ? 'border-brand-300 bg-brand-50/60' : 'border-stone-200 bg-stone-50'}`;
+      document.getElementById('help-data-section').innerHTML = `
+        <h4><i class="fa-solid fa-cloud text-brand-500"></i> How your data is saved</h4>
+        <p class="mb-2">The planner runs in two places, and each one saves differently. Every change saves on its own in both; there's no save button.</p>
+        <div class="space-y-2">
+          <div class="${box(serverMode)}">
+            <p class="font-bold text-stone-900 mb-1 flex items-center gap-1.5"><i class="fa-solid fa-lock text-brand-500"></i> Signed-in household planner ${youAreHere(serverMode)}</p>
+            <ul>
+              <li>Saved to the cloud. Everyone signed in with the household password shares one planner, and changes show up on other devices within about 10 seconds, or as soon as the app is reopened.</li>
+              <li>The badge in the header shows <strong>Synced</strong>, <strong>Saving…</strong> or <strong>Offline</strong>.</li>
+              <li>Each device also keeps its own copy, so the planner opens and works without a connection. Changes made offline sync when the connection is back.</li>
+              <li>If two people change different things at the same time, both changes are kept. If they change the same thing (for example the same week's plan), the last save wins.</li>
+              <li>Signing out (the arrow icon in the header) removes the offline copy of the page from that device. Otherwise you stay signed in for about 6 months.</li>
+            </ul>
+          </div>
+          <div class="${box(!serverMode)}">
+            <p class="font-bold text-stone-900 mb-1 flex items-center gap-1.5"><i class="fa-brands fa-github text-stone-700"></i> GitHub Pages copy ${youAreHere(!serverMode)}</p>
+            <ul>
+              <li>No sign-in. Everything is saved only in the browser you're using, on that device (its local storage).</li>
+              <li>Nothing is shared: a phone and a laptop each keep their own separate planner, and so do two different browsers on the same computer.</li>
+              <li>Clearing your browser data, or using a private window, loses it. Use <strong>Download backup</strong> in History now and then.</li>
+              <li>There's no automatic history or saved plans, but Undo and backup files work.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="mt-2">Data doesn't move between the two on its own. To copy it across, use <strong>Download backup</strong> in one and <strong>Restore from file</strong> in the other. Colours and the grocery range (Full Week, Rest of Week, Today Only) are always set per device.</p>
+      `;
+      document.getElementById('help-history-item').innerHTML = `<strong>History</strong> (signed-in planner only) keeps automatic checkpoints: one before each of those actions and one at the start of each editing session, with the last 50 kept. <strong>Restore</strong> rolls everything back to that moment, and can itself be undone. <strong>Saved plans</strong> let you name a week you liked and load it into any week later; recipes deleted since are brought back.`;
       openModal('help-modal');
     }
 
@@ -3222,7 +3320,7 @@
     let pushEpoch = 0;
 
     function getSyncedState() {
-      const state = { dinners, breakfasts, stockedPantryItems, clearedAllergens, customGroceries, babyBirthdate, selectedStageKey, stageOverride };
+      const state = { dinners, breakfasts, stockedPantryItems, clearedAllergens, customGroceries, recentExtras, babyBirthdate, selectedStageKey, stageOverride };
       Object.keys(weeks).forEach(k => { state['week:' + k] = weeks[k]; });
       Object.keys(groceryChecks).forEach(k => { state['checks:' + k] = groceryChecks[k]; });
       return state;
@@ -3247,6 +3345,7 @@
         case 'stockedPantryItems': stockedPantryItems = value; break;
         case 'clearedAllergens': clearedAllergens = value; break;
         case 'customGroceries': customGroceries = value; break;
+        case 'recentExtras': recentExtras = value; break;
         case 'babyBirthdate': babyBirthdate = value; break;
         case 'selectedStageKey': selectedStageKey = value; break;
         case 'stageOverride': stageOverride = value; break;
