@@ -106,6 +106,9 @@
         <button onclick="openThemeModal()" class="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-xs font-semibold transition flex items-center gap-1.5" title="Pick colours">
           <i class="fa-solid fa-palette text-brand-500"></i> Colours
         </button>
+        <button onclick="openHelpModal()" class="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-xs font-semibold transition flex items-center gap-1.5" title="How to use the planner">
+          <i class="fa-solid fa-circle-question text-brand-500"></i> Help
+        </button>
 
         <button id="autofill-btn" class="px-3 py-1.5 bg-sage-500 hover:bg-sage-600 text-white rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
           <i class="fa-solid fa-shuffle"></i> Autofill
@@ -483,6 +486,86 @@
           <button onclick="resetTheme()" class="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg font-semibold">Reset to default</button>
           <button onclick="closeModal('theme-modal')" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg font-bold">Done</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div id="help-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[88vh] flex flex-col shadow-xl overflow-hidden">
+      <div class="p-4 border-b border-stone-200 flex justify-between items-center">
+        <div>
+          <h3 class="font-bold text-stone-900 text-base flex items-center gap-2"><i class="fa-solid fa-circle-question text-brand-500"></i> How to use the planner</h3>
+          <p class="text-xs text-stone-500">A quick tour of every part of the app and how your data is saved</p>
+        </div>
+        <button onclick="closeModal('help-modal')" class="text-stone-400 hover:text-stone-700 text-lg p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="p-4 overflow-y-auto space-y-3 text-xs text-stone-700 leading-relaxed [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:space-y-1 [&_h4]:font-bold [&_h4]:text-stone-900 [&_h4]:text-sm [&_h4]:mb-1.5 [&_h4]:flex [&_h4]:items-center [&_h4]:gap-2 [&_section]:p-3 [&_section]:rounded-xl [&_section]:border [&_section]:border-stone-200">
+        <section>
+          <h4><i class="fa-solid fa-calendar-week text-brand-500"></i> Planning the week</h4>
+          <ul>
+            <li>Each week runs Monday to Sunday. Use the arrows beside the week name to plan ahead or look back, and tap the week name to jump back to this week.</li>
+            <li>Every day has a baby breakfast on the left and a family dinner on the right. The dinner is sized to cover tomorrow's lunch too.</li>
+            <li><strong>Change</strong> picks a dinner (search by name, ingredient or tag, or use the filters). <strong>Shuffle</strong> swaps in a random dinner. <strong>Cook Mode</strong> shows the recipe in big print and keeps the screen awake.</li>
+            <li><strong>Autofill</strong> fills every day of the week you're viewing at random. <strong>Reset Week</strong> clears that week's dinners and grocery ticks. Both can be undone.</li>
+            <li>When a week is empty, a card at the top offers to copy the previous week, load a saved plan or Autofill.</li>
+            <li>The printer icon beside the week name prints the week's plan.</li>
+          </ul>
+        </section>
+        <section>
+          <h4><i class="fa-solid fa-book-open text-brand-500"></i> Recipes</h4>
+          <ul>
+            <li><strong>Dinners</strong> and <strong>Breakfasts</strong> open the recipe boxes, where you can add, edit and delete recipes.</li>
+            <li>Ingredient names suggest existing ones as you type. Reusing the same name lets the grocery list combine it properly.</li>
+            <li>Tags mark allergens and nutrition for the radar. Each breakfast also has a minimum stage, which controls when it unlocks.</li>
+          </ul>
+        </section>
+        <section>
+          <h4><i class="fa-solid fa-baby text-brand-500"></i> Baby stages</h4>
+          <ul>
+            <li>Open <strong>Stage Settings</strong> and enter the birthdate. The stage then moves forward on its own as baby grows.</li>
+            <li>Choosing a stage by hand overrides the automatic one until the birthdate is entered again.</li>
+            <li>The stage decides which breakfasts are available and the baby preparation tip shown with each dinner.</li>
+            <li>Open <strong>Full stage guide &amp; safety</strong> on the stage banner for textures, amounts, drinks, iron, allergens and choking safety, based on Health Canada and Canadian Paediatric Society guidance.</li>
+          </ul>
+        </section>
+        <section>
+          <h4><i class="fa-solid fa-shield-halved text-brand-500"></i> Allergen &amp; nutrition radar</h4>
+          <ul>
+            <li>A green check means the allergen is in at least one meal of the week you're viewing. It's picked up from recipe tags and from ingredient names (for example, soy sauce counts as soy and wheat, but peanut butter doesn't count as dairy).</li>
+            <li>Tap the star to mark an allergen as tolerated. It's a reminder for you and doesn't change anything else.</li>
+            <li>The radar only reads names, so it can't see what's inside packaged products like sauces or seasoning blends.</li>
+          </ul>
+        </section>
+        <section>
+          <h4><i class="fa-solid fa-basket-shopping text-brand-500"></i> Grocery list</h4>
+          <ul>
+            <li>It's built from the week's meals. Matching items are combined, units are converted (ounces to pounds, tablespoons to cups), and things you buy whole are rounded up. Under each item you'll see which days need it.</li>
+            <li><strong>Full Week</strong>, <strong>Rest of Week</strong> and <strong>Today Only</strong> narrow the list. They appear when you're viewing this week.</li>
+            <li>Tick items as you shop. Ticks are kept per week and stay put if a quantity changes.</li>
+            <li>The box icon moves an item to <strong>Already in pantry</strong> for every week. Use <strong>Unstash</strong> to bring it back.</li>
+            <li>Add extras like coffee in the box at the top. The copy icon puts the list on the clipboard for texting, and the printer icon prints it.</li>
+          </ul>
+        </section>
+        <section id="help-data-section"></section>
+        <section>
+          <h4><i class="fa-solid fa-clock-rotate-left text-brand-500"></i> Undo, history &amp; backups</h4>
+          <ul>
+            <li>After Reset Week, Autofill, loading a plan, restoring, or deleting a recipe, an <strong>Undo</strong> button appears at the bottom for 10 seconds.</li>
+            <li id="help-history-item"></li>
+            <li><strong>Download backup</strong> in History saves everything to a file. <strong>Restore from file</strong> loads one, which is also how you move data from another copy of the planner.</li>
+          </ul>
+        </section>
+        <section>
+          <h4><i class="fa-solid fa-palette text-brand-500"></i> Make it yours</h4>
+          <ul>
+            <li><strong>Colours</strong> changes the accent and secondary colours on this device only.</li>
+            <li>To add it to your phone's home screen: on iPhone, tap Share in Safari, then Add to Home Screen. On Android, open the Chrome menu, then Add to Home screen. It then opens full screen like an app.</li>
+            <li>Press Escape, or tap outside a window, to close it. Recipe forms only close with Cancel or Escape, so nothing you've typed is lost by accident.</li>
+          </ul>
+        </section>
       </div>
     </div>
   </div>
@@ -3011,6 +3094,39 @@
       } catch (err) {
         showToast('Couldn\'t delete it. Check the connection and try again.');
       }
+    }
+
+    // ---------- Help ----------
+    // The data section depends on whether this copy syncs through the server or only keeps browser storage
+    function openHelpModal() {
+      const dataSection = document.getElementById('help-data-section');
+      const historyItem = document.getElementById('help-history-item');
+      if (serverMode) {
+        dataSection.innerHTML = `
+          <h4><i class="fa-solid fa-cloud text-brand-500"></i> How your data is saved</h4>
+          <ul>
+            <li>Every change saves on its own within a second. There's no save button.</li>
+            <li>Everyone signed in with the household password shares the same planner. Changes show up on other devices within about 10 seconds, or as soon as the app is reopened.</li>
+            <li>The badge in the header shows <strong>Synced</strong>, <strong>Saving…</strong> or <strong>Offline</strong>.</li>
+            <li>Each device also keeps its own copy, so the planner opens and works without a connection. Changes made offline sync when the connection is back.</li>
+            <li>If two people change different things at the same time, both changes are kept. If they change the same thing (for example the same week's plan), the last save wins.</li>
+            <li>Colours and the grocery range (Full Week, Rest of Week, Today Only) are set per device and aren't shared.</li>
+            <li>Signing out (the arrow icon in the header) removes the offline copy of the page from that device. You stay signed in for about 6 months otherwise.</li>
+          </ul>
+        `;
+        historyItem.innerHTML = `<strong>History</strong> keeps automatic checkpoints: one before each of those actions and one at the start of each editing session (the last 50 are kept). <strong>Restore</strong> rolls everything back to that moment, and can itself be undone. <strong>Saved plans</strong> let you name a week you liked and load it into any week later; recipes deleted since are brought back.`;
+      } else {
+        dataSection.innerHTML = `
+          <h4><i class="fa-solid fa-hard-drive text-brand-500"></i> How your data is saved</h4>
+          <ul>
+            <li>This copy of the planner saves only in this browser, on this device. Every change saves on its own, but nothing is shared with other devices.</li>
+            <li>Clearing your browser data erases it, so use <strong>Download backup</strong> in History now and then.</li>
+            <li>The signed-in household planner saves to the cloud, shares one planner across devices, and keeps automatic history.</li>
+          </ul>
+        `;
+        historyItem.innerHTML = `Automatic history and saved plans are only available on the signed-in household planner.`;
+      }
+      openModal('help-modal');
     }
 
     // ---------- Colour themes (per device) ----------
