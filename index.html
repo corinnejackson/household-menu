@@ -1616,10 +1616,19 @@
       return stats;
     }
 
+    // Recipe units are stored as picked in the form ("cups", "can"); say "1 cup", "½ cup", "2 cans"
+    const UNIT_SINGULAR = { lbs: 'lb', heads: 'head', cloves: 'clove', cups: 'cup' };
+    const UNIT_PLURAL = { can: 'cans', tub: 'tubs', box: 'boxes', pack: 'packs', pouch: 'pouches', bunch: 'bunches', canister: 'canisters' };
+
+    function formatQuantity(amount, unit) {
+      const label = !unit || unit === 'whole' ? '' : amount <= 1 ? (UNIT_SINGULAR[unit] || unit) : (UNIT_PLURAL[unit] || unit);
+      return `${formatAmount(amount)}${label ? ' ' + label : ''}`;
+    }
+
     function describeUsualAmount(s) {
       if (s.unit === 'as needed') return 'usually as needed';
       if (s.amount === null) return `usually by the ${s.unit}`;
-      return `usually ${formatAmount(s.amount)}${s.unit === 'whole' ? '' : ' ' + s.unit}`;
+      return `usually ${formatQuantity(s.amount, s.unit)}`;
     }
 
     // Swap a typed name for the existing spelling when they differ only by capitals or plurals
@@ -2365,7 +2374,7 @@
         dinner.ingredients.forEach(i => {
           const badge = document.createElement('span');
           badge.className = 'px-2.5 py-1 bg-white border border-stone-200 rounded-lg shadow-2xs font-medium';
-          badge.innerText = `${i.amount ? i.amount + ' ' + i.unit + ' ' : ''}${i.name}`;
+          badge.innerText = `${i.amount ? formatQuantity(i.amount, i.unit) + ' ' : ''}${i.name}`;
           ingContainer.appendChild(badge);
         });
       }
@@ -2409,7 +2418,7 @@
                 <h4 class="text-xs font-bold text-stone-900">${esc(d.title)}</h4>
                 <span class="text-[10px] px-1.5 py-0.5 bg-stone-100 rounded text-stone-600">${esc(d.type || 'Dinner')}</span>
               </div>
-              <p class="text-[11px] text-stone-500 mt-1">${d.ingredients ? esc(d.ingredients.map(i => `${i.amount ? i.amount + ' ' + i.unit + ' ' : ''}${i.name}`).join(', ')) : ''}</p>
+              <p class="text-[11px] text-stone-500 mt-1">${d.ingredients ? esc(d.ingredients.map(i => `${i.amount ? formatQuantity(i.amount, i.unit) + ' ' : ''}${i.name}`).join(', ')) : ''}</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="editDinner(${jsArg(d.id)})" class="text-stone-400 hover:text-brand-600 text-xs p-1 transition" title="Edit Recipe">
