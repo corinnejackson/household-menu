@@ -20,6 +20,7 @@
       --sage-400: 148 167 151; --sage-500: 129 152 133; --sage-600: 103 128 108; --sage-700: 83 104 88;
     }
     .no-baby .baby-only, html:not(.no-baby) .no-baby-only { display: none !important; }
+    .courses .no-courses-only, html:not(.courses) .courses-only { display: none !important; }
     @media print {
       @page { margin: 12mm; }
       body { background: #fff !important; padding-bottom: 0 !important; }
@@ -35,6 +36,7 @@
   <script>
     // Accounts with the baby features off hide them before first paint
     if (window.__PLANNER_BOOT__?.account?.baby === false) document.documentElement.classList.add('no-baby');
+    if (window.__PLANNER_BOOT__?.account?.courses) document.documentElement.classList.add('courses');
     // Apply the saved per-device colour theme before first paint to avoid a flash of the default colours
     try {
       const savedTheme = JSON.parse(localStorage.getItem('planner_theme_v1') || 'null');
@@ -92,13 +94,13 @@
             <i class="fa-solid fa-gear text-[10px] text-amber-700 opacity-70"></i>
           </button>
         </div>
-        <p class="text-xs text-stone-500"><span class="baby-only">Weekly Dinners • Stage-Gated Breakfasts • Iron & Allergen Tracking</span><span class="no-baby-only">Weekly Dinners • Grocery List</span></p>
+        <p class="text-xs text-stone-500"><span class="baby-only">Weekly Dinners • Stage-Gated Breakfasts • Iron & Allergen Tracking</span><span class="no-baby-only"><span class="no-courses-only">Weekly Dinners</span><span class="courses-only">Weekly Meals</span> • Grocery List</span></p>
       </div>
 
       <!-- Action Buttons -->
       <div class="flex items-center gap-2 flex-wrap">
         <button id="open-dinner-box-btn" class="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
-          <i class="fa-solid fa-moon text-indigo-500"></i> Dinners (<span id="dinner-count-badge">0</span>)
+          <i class="fa-solid fa-moon text-indigo-500"></i> <span class="no-courses-only">Dinners</span><span class="courses-only">Recipes</span> (<span id="dinner-count-badge">0</span>)
         </button>
         <button id="open-breakfast-box-btn" class="baby-only px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
           <i class="fa-solid fa-sun text-amber-500"></i> Breakfasts (<span id="breakfast-count-badge">0</span>)
@@ -389,7 +391,7 @@
       <div class="p-4 border-b border-stone-200 flex justify-between items-center">
         <div>
           <h3 class="font-bold text-stone-900 text-base" id="modal-title">Select Recipe</h3>
-          <p class="text-xs text-stone-500">Choose a dinner from your library</p>
+          <p class="text-xs text-stone-500" id="modal-subtitle">Choose a dinner from your library</p>
         </div>
         <button onclick="closeModal('recipe-modal')" class="text-stone-400 hover:text-stone-700 text-lg p-1">
           <i class="fa-solid fa-xmark"></i>
@@ -512,7 +514,9 @@
           <ul>
             <li>Each week runs Monday to Sunday. Use the arrows beside the week name to plan ahead or look back, and tap the week name to jump back to this week.</li>
             <li class="baby-only">Every day has a baby breakfast on the left and a family dinner on the right. The dinner is sized to cover tomorrow's lunch too.</li>
-            <li class="no-baby-only">Every day has a dinner, sized to cover tomorrow's lunch too.</li>
+            <li class="no-baby-only no-courses-only">Every day has a dinner, sized to cover tomorrow's lunch too.</li>
+            <li class="courses-only">Every day has a dinner. Use <strong>+ Breakfast</strong>, <strong>+ Lunch</strong>, <strong>+ Dessert</strong> and <strong>+ Snack</strong> under it to add the optional meals. Tap one to open it in Cook Mode, the pencil to change it, or the cross to remove it.</li>
+            <li class="courses-only">Autofill and Shuffle only change dinners. Breakfasts, lunches, desserts and snacks stay as you set them, and they're added to the grocery list too.</li>
             <li><strong>Change</strong> picks a dinner (search by name, ingredient or tag, or use the filters). <strong>Shuffle</strong> swaps in a random dinner. <strong>Cook Mode</strong> shows the recipe in big print and keeps the screen awake.</li>
             <li><strong>Autofill</strong> fills every day of the week you're viewing at random. <strong>Reset Week</strong> clears that week's dinners and grocery ticks. Both can be undone.</li>
             <li>When a week is empty, a card at the top offers to copy the previous week, load a saved plan or Autofill.</li>
@@ -523,7 +527,8 @@
           <h4><i class="fa-solid fa-book-open text-brand-500"></i> Recipes</h4>
           <ul>
             <li class="baby-only"><strong>Dinners</strong> and <strong>Breakfasts</strong> open the recipe boxes, where you can add, edit and delete recipes.</li>
-            <li class="no-baby-only"><strong>Dinners</strong> opens the recipe box, where you can add, edit and delete recipes.</li>
+            <li class="no-baby-only no-courses-only"><strong>Dinners</strong> opens the recipe box, where you can add, edit and delete recipes.</li>
+            <li class="courses-only"><strong>Recipes</strong> opens the recipe box, where you can add, edit and delete recipes. Each recipe has a course (breakfast, lunch, dinner, dessert or snack), which decides where it can be planned.</li>
             <li>Ingredient names suggest ones already used in other recipes. Picking one fills in its usual unit, aisle and amount (the amount only if you haven't typed one), and a note underneath shows how many recipes use it.</li>
             <li>If you type a name that differs from an existing one only by capitals or plurals, like "sweet potato", it's saved with the existing spelling so the grocery list combines it properly.</li>
             <li class="baby-only">Tags mark allergens and nutrition for the radar. Each breakfast also has a minimum stage, which controls when it unlocks.</li>
@@ -589,12 +594,12 @@
     <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-xl overflow-hidden">
       <div class="p-4 border-b border-stone-200 flex justify-between items-center">
         <div>
-          <h3 class="font-bold text-stone-900 text-base">Dinner Recipe Box</h3>
-          <p class="text-xs text-stone-500">Manage, edit, and organize dinners</p>
+          <h3 class="font-bold text-stone-900 text-base"><span class="no-courses-only">Dinner </span>Recipe Box</h3>
+          <p class="text-xs text-stone-500">Manage, edit, and organize <span class="no-courses-only">dinners</span><span class="courses-only">breakfasts, lunches, dinners, desserts and snacks</span></p>
         </div>
         <div class="flex items-center gap-2">
           <button onclick="openCreateDinnerModal()" class="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1">
-            <i class="fa-solid fa-plus"></i> New Dinner
+            <i class="fa-solid fa-plus"></i> New <span class="no-courses-only">Dinner</span><span class="courses-only">Recipe</span>
           </button>
           <button onclick="closeModal('dinner-box-modal')" class="text-stone-400 hover:text-stone-700 text-lg p-1">
             <i class="fa-solid fa-xmark"></i>
@@ -646,6 +651,17 @@
           <input id="din-input-title" required type="text" placeholder="e.g. Sheet Pan Lemon Chicken" class="w-full rounded-lg border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none" />
         </div>
 
+        <div class="courses-only">
+          <label class="block font-semibold text-stone-700 mb-1">Course</label>
+          <select id="din-input-course" class="w-full rounded-lg border border-stone-300 px-3 py-2 bg-white focus:ring-1 focus:ring-brand-500 focus:outline-none">
+            <option value="dinner">Dinner</option>
+            <option value="breakfast">Breakfast</option>
+            <option value="lunch">Lunch</option>
+            <option value="dessert">Dessert</option>
+            <option value="snack">Snack</option>
+          </select>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block font-semibold text-stone-700 mb-1">Cooking Type</label>
@@ -683,7 +699,7 @@
             Cancel
           </button>
           <button type="submit" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg font-semibold">
-            Save Dinner
+            Save <span class="no-courses-only">Dinner</span><span class="courses-only">Recipe</span>
           </button>
         </div>
       </form>
@@ -764,6 +780,7 @@
       'bunch',
       'cups',
       'tbsp',
+      'tsp',
       'can',
       'tub',
       'box',
@@ -1371,6 +1388,7 @@
     // Signed-in site only. Opened from GitHub Pages there's no account and every feature shows.
     const BOOT_ACCOUNT = window.__PLANNER_BOOT__?.account || null;
     const BABY_MODE = !BOOT_ACCOUNT || BOOT_ACCOUNT.baby;
+    const COURSES_MODE = !!BOOT_ACCOUNT?.courses;
     if (!BABY_MODE) document.title = 'Weekly Meal Planner';
 
     function clearLocalData() {
@@ -1415,6 +1433,37 @@
         day,
         { dinner: null, breakfast: available.length ? available[i % available.length].id : null }
       ]));
+    }
+
+    // Courses mode only: every recipe lives in `dinners` with a course, and a day can add an optional
+    // breakfast, lunch, dessert and any number of snacks next to its dinner. The day's `breakfast` field
+    // belongs to the baby breakfast, so this breakfast is stored as `breakfastMeal`.
+    const COURSE_LABELS = { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', dessert: 'Dessert', snack: 'Snack' };
+    const COURSE_PLURALS = { breakfast: 'Breakfasts', lunch: 'Lunches', dinner: 'Dinners', dessert: 'Desserts', snack: 'Snacks' };
+    const EXTRA_SLOTS = [
+      { slot: 'breakfastMeal', course: 'breakfast', icon: 'fa-mug-saucer' },
+      { slot: 'lunch', course: 'lunch', icon: 'fa-bowl-food' },
+      { slot: 'dessert', course: 'dessert', icon: 'fa-ice-cream' },
+      { slot: 'snacks', course: 'snack', icon: 'fa-cookie-bite' }
+    ];
+
+    function courseOf(recipe) {
+      return COURSES_MODE ? recipe.course || 'dinner' : 'dinner';
+    }
+
+    function recipesForCourse(course) {
+      return dinners.filter(r => courseOf(r) === course);
+    }
+
+    // Recipe ids a day's optional slots hold, as [slot, id] pairs
+    function extraAssignments(plan) {
+      if (!COURSES_MODE || !plan) return [];
+      return [
+        ...(plan.breakfastMeal ? [['breakfastMeal', plan.breakfastMeal]] : []),
+        ...(plan.lunch ? [['lunch', plan.lunch]] : []),
+        ...(plan.dessert ? [['dessert', plan.dessert]] : []),
+        ...(plan.snacks || []).map(id => ['snacks', id])
+      ];
     }
 
     function currentChecks() {
@@ -1863,7 +1912,7 @@
                 <div>
                   <div class="flex items-center justify-between mb-1">
                     <span class="text-[10px] uppercase font-bold tracking-wider ${isPast ? 'text-stone-500' : 'text-brand-600'} flex items-center gap-1">
-                      <i class="fa-solid fa-moon ${isPast ? 'text-stone-400' : 'text-indigo-400'}"></i> Dinner + Tomorrow's Lunch
+                      <i class="fa-solid fa-moon ${isPast ? 'text-stone-400' : 'text-indigo-400'}"></i> ${COURSES_MODE ? 'Dinner' : "Dinner + Tomorrow's Lunch"}
                     </span>
                     <div class="flex items-center gap-1.5">
                       <span class="px-2 py-0.5 ${isPast ? 'bg-stone-300/80 text-stone-600' : 'bg-stone-100 text-stone-600'} rounded text-[10px] font-medium whitespace-nowrap">${esc(dinner.type || 'Dinner')}</span>
@@ -1892,16 +1941,52 @@
                 </div>
               `}
             </div>
+            ${COURSES_MODE ? renderExtraSlots(day, assignment, isPast) : ''}
           </div>
         `;
         container.appendChild(card);
       });
     }
 
+    // Lunch, dessert and snacks under a day's dinner, each removable, plus buttons to add them
+    function renderExtraSlots(day, assignment, isPast) {
+      const chips = extraAssignments(assignment).map(([slot, id]) => {
+        const recipe = dinners.find(r => r.id === id);
+        if (!recipe) return '';
+        const { icon, course } = EXTRA_SLOTS.find(s => s.slot === slot);
+        return `
+          <span class="inline-flex items-center gap-1.5 max-w-full pl-2 pr-1 py-1 rounded-lg border text-xs ${isPast ? 'bg-stone-300/40 border-stone-300 text-stone-600' : 'bg-stone-50 border-stone-200 text-stone-800'}">
+            <i class="fa-solid ${icon} ${isPast ? 'text-stone-400' : 'text-brand-500'} text-[11px]"></i>
+            <span class="text-[10px] uppercase font-bold tracking-wider text-stone-500">${COURSE_LABELS[course]}</span>
+            <button onclick="openCookMode(${jsArg(id)})" class="font-semibold truncate hover:underline text-left" title="Open in Cook Mode">${esc(recipe.title)}</button>
+            ${slot === 'snacks' ? '' : `<button onclick="openRecipeModal('${day}', '${slot}')" class="print-hide p-1 text-stone-400 hover:text-brand-600" title="Change ${COURSE_LABELS[course].toLowerCase()}"><i class="fa-solid fa-pen text-[10px]"></i></button>`}
+            <button onclick="removeExtra('${day}', '${slot}', ${jsArg(id)})" class="print-hide p-1 text-stone-400 hover:text-rose-600" title="Remove"><i class="fa-solid fa-xmark text-[11px]"></i></button>
+          </span>
+        `;
+      }).join('');
+      const addButtons = EXTRA_SLOTS
+        .filter(({ slot }) => slot === 'snacks' || !assignment[slot] || !dinners.some(r => r.id === assignment[slot]))
+        .map(({ slot, course, icon }) => `
+          <button onclick="openRecipeModal('${day}', '${slot}')" class="print-hide px-2 py-1 rounded-lg border border-dashed border-stone-300 text-[11px] font-semibold text-stone-500 hover:border-brand-300 hover:text-brand-600 transition flex items-center gap-1">
+            <i class="fa-solid ${icon} text-[10px]"></i> + ${COURSE_LABELS[course]}
+          </button>
+        `).join('');
+      return `<div class="md:col-span-12 -mt-1 pt-3 border-t ${isPast ? 'border-stone-300' : 'border-stone-100'} flex flex-wrap items-center gap-2">${chips}${addButtons}</div>`;
+    }
+
+    function removeExtra(day, slot, id) {
+      const plan = currentWeeklyPlan[day];
+      if (!plan) return;
+      if (slot === 'snacks') plan.snacks = (plan.snacks || []).filter(s => s !== id);
+      else plan[slot] = null;
+      saveState();
+    }
+
     function shuffleSingleDay(day) {
-      if (dinners.length <= 1) return;
+      const dinnerRecipes = recipesForCourse('dinner');
+      if (dinnerRecipes.length <= 1) return;
       const currentId = currentWeeklyPlan[day]?.dinner;
-      const candidates = dinners.filter(d => d.id !== currentId);
+      const candidates = dinnerRecipes.filter(d => d.id !== currentId);
       const pick = candidates[Math.floor(Math.random() * candidates.length)];
       currentWeeklyPlan[day].dinner = pick.id;
       saveState();
@@ -2095,7 +2180,11 @@
       days.forEach(day => {
         const plan = currentWeeklyPlan[day];
         if (!plan) return;
-        const meals = [dinners.find(r => r.id === plan.dinner), BABY_MODE && breakfasts.find(b => b.id === plan.breakfast)];
+        const meals = [
+          dinners.find(r => r.id === plan.dinner),
+          ...extraAssignments(plan).map(([, id]) => dinners.find(r => r.id === id)),
+          BABY_MODE && breakfasts.find(b => b.id === plan.breakfast)
+        ];
         meals.forEach(meal => (meal?.ingredients || []).forEach(ing => {
           const name = (ing.name || '').trim();
           if (!name) return;
@@ -2271,10 +2360,18 @@
 
     // ---------- Dinner picker with search and filters ----------
     let recipeFilter = 'all';
+    let activeSlotSelecting = 'dinner';
 
-    function openRecipeModal(day) {
+    function slotCourse(slot) {
+      return EXTRA_SLOTS.find(s => s.slot === slot)?.course || 'dinner';
+    }
+
+    function openRecipeModal(day, slot = 'dinner') {
       activeDaySelecting = day;
-      document.getElementById('modal-title').innerText = `Select Dinner for ${day}`;
+      activeSlotSelecting = slot;
+      const label = COURSE_LABELS[slotCourse(slot)];
+      document.getElementById('modal-title').innerText = slot === 'snacks' ? `Add a Snack for ${day}` : `Select ${label} for ${day}`;
+      document.getElementById('modal-subtitle').innerText = `Choose a ${label.toLowerCase()} from your library`;
       document.getElementById('recipe-search-input').value = '';
       recipeFilter = 'all';
       renderRecipePicker();
@@ -2286,16 +2383,25 @@
       renderRecipePicker();
     }
 
+    function slotIds(plan, slot) {
+      if (!plan) return [];
+      if (slot === 'snacks') return plan.snacks || [];
+      return plan[slot] ? [plan[slot]] : [];
+    }
+
     function renderRecipePicker() {
       const day = activeDaySelecting;
+      const slot = activeSlotSelecting;
+      const course = slotCourse(slot);
+      const courseName = COURSE_LABELS[course].toLowerCase();
+      const library = recipesForCourse(course);
       const query = document.getElementById('recipe-search-input').value.trim().toLowerCase();
       const usedDays = {};
       DAYS_OF_WEEK.forEach(d => {
-        const id = currentWeeklyPlan[d]?.dinner;
-        if (id) (usedDays[id] || (usedDays[id] = [])).push(d.slice(0, 3));
+        slotIds(currentWeeklyPlan[d], slot).forEach(id => (usedDays[id] || (usedDays[id] = [])).push(d.slice(0, 3)));
       });
 
-      const types = [...new Set(dinners.map(d => d.type || 'Dinner'))].sort();
+      const types = [...new Set(library.map(d => d.type || 'Dinner'))].sort();
       const chips = [
         ['all', 'All'],
         ...types.map(t => [`type:${t}`, t]),
@@ -2308,7 +2414,7 @@
         }">${esc(label)}</button>
       `).join('');
 
-      const matches = dinners.filter(rec => {
+      const matches = library.filter(rec => {
         if (recipeFilter.startsWith('type:') && (rec.type || 'Dinner') !== recipeFilter.slice(5)) return false;
         if (recipeFilter === 'tag:High Iron' && !(rec.tags || []).includes('High Iron') && !detectNutritionFromIngredients(rec.ingredients).has('High Iron')) return false;
         if (recipeFilter === 'unused' && usedDays[rec.id]) return false;
@@ -2319,17 +2425,19 @@
 
       const list = document.getElementById('modal-recipe-list');
       list.innerHTML = '';
-      if (dinners.length === 0) {
-        list.innerHTML = `<p class="text-xs text-stone-400 text-center py-6">Your dinner library is empty.</p>`;
+      if (library.length === 0) {
+        list.innerHTML = COURSES_MODE && course !== 'dinner'
+          ? `<p class="text-xs text-stone-400 text-center py-6">No ${courseName} recipes yet. Add one in Recipes and set its course to ${COURSE_LABELS[course]}.</p>`
+          : `<p class="text-xs text-stone-400 text-center py-6">Your dinner library is empty.</p>`;
         return;
       }
       if (matches.length === 0) {
-        list.innerHTML = `<p class="text-xs text-stone-400 text-center py-6">No dinners match. Try a different search or filter.</p>`;
+        list.innerHTML = `<p class="text-xs text-stone-400 text-center py-6">No ${COURSE_PLURALS[course].toLowerCase()} match. Try a different search or filter.</p>`;
         return;
       }
 
       matches.forEach(rec => {
-        const isCurrent = currentWeeklyPlan[day]?.dinner === rec.id;
+        const isCurrent = slotIds(currentWeeklyPlan[day], slot).includes(rec.id);
         const btn = document.createElement('button');
         btn.className = `w-full text-left p-3 rounded-xl transition flex items-start justify-between gap-3 ${
           isCurrent ? 'bg-brand-50 border border-brand-200' : 'hover:bg-stone-50'
@@ -2354,7 +2462,12 @@
     function selectRecipeForDay(recipeId) {
       if (activeDaySelecting) {
         if (!currentWeeklyPlan[activeDaySelecting]) currentWeeklyPlan[activeDaySelecting] = {};
-        currentWeeklyPlan[activeDaySelecting].dinner = recipeId;
+        const plan = currentWeeklyPlan[activeDaySelecting];
+        if (activeSlotSelecting === 'snacks') {
+          if (!(plan.snacks || []).includes(recipeId)) plan.snacks = [...(plan.snacks || []), recipeId];
+        } else {
+          plan[activeSlotSelecting] = recipeId;
+        }
         saveState();
         closeModal('recipe-modal');
       }
@@ -2427,9 +2540,17 @@
       const list = document.getElementById('dinner-box-list');
       list.innerHTML = '';
       if (dinners.length === 0) {
-        list.innerHTML = `<p class="text-xs text-stone-400 text-center py-6">No dinners in your box.</p>`;
+        list.innerHTML = `<p class="text-xs text-stone-400 text-center py-6">No ${COURSES_MODE ? 'recipes' : 'dinners'} in your box.</p>`;
       } else {
-        dinners.forEach(d => {
+        const order = Object.keys(COURSE_LABELS);
+        const sorted = COURSES_MODE ? [...dinners].sort((a, b) => order.indexOf(courseOf(a)) - order.indexOf(courseOf(b))) : dinners;
+        sorted.forEach((d, i) => {
+          if (COURSES_MODE && (i === 0 || courseOf(sorted[i - 1]) !== courseOf(d))) {
+            const heading = document.createElement('h4');
+            heading.className = 'pt-3 text-[11px] font-bold uppercase tracking-wider text-stone-500';
+            heading.innerText = COURSE_PLURALS[courseOf(d)];
+            list.appendChild(heading);
+          }
           const item = document.createElement('div');
           item.className = 'py-3 flex items-start justify-between gap-4';
           item.innerHTML = `
@@ -2460,7 +2581,8 @@
       if (!dinner) return;
       closeModal('dinner-box-modal');
 
-      document.getElementById('dinner-form-modal-title').innerText = 'Edit Dinner Recipe';
+      document.getElementById('dinner-form-modal-title').innerText = COURSES_MODE ? 'Edit Recipe' : 'Edit Dinner Recipe';
+      document.getElementById('din-input-course').value = courseOf(dinner);
       document.getElementById('din-edit-id').value = dinner.id;
       document.getElementById('din-input-title').value = dinner.title || '';
       document.getElementById('din-input-type').value = dinner.type || '';
@@ -2488,7 +2610,13 @@
         pendingSnapshot = { label: `Before deleting "${dinner?.title || 'a dinner'}"`, week: viewedWeekKey };
         dinners = dinners.filter(d => d.id !== id);
         DAYS_OF_WEEK.forEach(day => {
-          if (currentWeeklyPlan[day]?.dinner === id) currentWeeklyPlan[day].dinner = null;
+          const plan = currentWeeklyPlan[day];
+          if (!plan) return;
+          if (plan.dinner === id) plan.dinner = null;
+          if (plan.breakfastMeal === id) plan.breakfastMeal = null;
+          if (plan.lunch === id) plan.lunch = null;
+          if (plan.dessert === id) plan.dessert = null;
+          if (plan.snacks) plan.snacks = plan.snacks.filter(s => s !== id);
         });
         saveState();
         document.getElementById('open-dinner-box-btn').click();
@@ -2656,7 +2784,7 @@
     }
 
     function openCreateDinnerModal() {
-      document.getElementById('dinner-form-modal-title').innerText = 'Add New Dinner';
+      document.getElementById('dinner-form-modal-title').innerText = COURSES_MODE ? 'Add New Recipe' : 'Add New Dinner';
       document.getElementById('dinner-form').reset();
       document.getElementById('din-edit-id').value = '';
       document.getElementById('dinner-ing-rows').innerHTML = '';
@@ -2674,6 +2802,7 @@
       const type = document.getElementById('din-input-type').value.trim() || 'Dinner';
       const tags = document.getElementById('din-input-tags').value.split(',').map(t => t.trim()).filter(Boolean);
       const instructions = document.getElementById('din-input-instructions').value.trim();
+      const course = COURSES_MODE ? { course: document.getElementById('din-input-course').value } : {};
 
       const ingredients = [];
       const dinnerStats = getIngredientStats(editId || null);
@@ -2691,6 +2820,7 @@
         if (idx !== -1) {
           dinners[idx] = {
             ...dinners[idx],
+            ...course,
             title,
             type,
             tags,
@@ -2702,6 +2832,7 @@
       } else {
         dinners.push({
           id: 'rec_' + Date.now(),
+          ...course,
           title,
           type,
           tags,
@@ -2912,15 +3043,17 @@
 
     // Autofill (Selects ONLY from currently unlocked breakfasts)
     document.getElementById('autofill-btn').addEventListener('click', () => {
-      if (dinners.length === 0) return showToast('Add some dinners first.');
+      const dinnerRecipes = recipesForCourse('dinner');
+      if (dinnerRecipes.length === 0) return showToast('Add some dinners first.');
       const availableBfs = getAvailableBreakfasts();
       if (BABY_MODE && availableBfs.length === 0) return showToast('No breakfasts are unlocked for the current stage.');
 
       runUndoable('Before Autofill', `Autofilled ${weekPhrase()}.`, () => {
-        const shuffledDinners = shuffled(dinners);
+        const shuffledDinners = shuffled(dinnerRecipes);
         const shuffledBfs = shuffled(availableBfs);
         DAYS_OF_WEEK.forEach((day, idx) => {
           currentWeeklyPlan[day] = {
+            ...currentWeeklyPlan[day],
             dinner: shuffledDinners[idx % shuffledDinners.length].id,
             breakfast: shuffledBfs.length ? shuffledBfs[idx % shuffledBfs.length].id : null
           };
@@ -3180,10 +3313,11 @@
         // Bring back any recipe the plan uses that was deleted after it was saved
         DAYS_OF_WEEK.forEach(day => {
           const slot = plan[day] || {};
-          if (slot.dinner && !dinners.some(r => r.id === slot.dinner)) {
-            const recipe = (data.dinners || []).find(r => r.id === slot.dinner);
+          [slot.dinner, slot.breakfastMeal, slot.lunch, slot.dessert, ...(slot.snacks || [])].forEach(id => {
+            if (!id || dinners.some(r => r.id === id)) return;
+            const recipe = (data.dinners || []).find(r => r.id === id);
             if (recipe) dinners.push(recipe);
-          }
+          });
           if (slot.breakfast && !breakfasts.some(b => b.id === slot.breakfast)) {
             const recipe = (data.breakfasts || []).find(b => b.id === slot.breakfast);
             if (recipe) breakfasts.push(recipe);

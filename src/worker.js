@@ -101,7 +101,7 @@ async function appPage(env, account) {
     version,
     state,
     servedAt: Date.now(),
-    account: { id: account.id, baby: !!account.baby }
+    account: { id: account.id, baby: !!account.baby, courses: !!account.courses }
   }).replace(/</g, '\\u003c');
   const html = APP_HTML.replace('<head>', `<head>\n  <script>window.__PLANNER_BOOT__ = ${boot};</script>`);
   const token = await createSessionToken(env, account);
@@ -218,7 +218,7 @@ async function sessionAccount(request, env) {
   const [id, expires, sig] = parts.length === 2 ? ['1', ...parts] : parts;
   const message = parts.length === 2 ? `v1.${expires}` : `v2.${id}.${expires}`;
   if (!/^\d+$/.test(id || '') || !expires || !sig || Number(expires) < Date.now()) return null;
-  const account = await env.DB.prepare('SELECT id, password_secret, baby FROM accounts WHERE id = ?').bind(Number(id)).first();
+  const account = await env.DB.prepare('SELECT id, password_secret, baby, courses FROM accounts WHERE id = ?').bind(Number(id)).first();
   const password = account && env[account.password_secret];
   if (!password) return null;
   try {
