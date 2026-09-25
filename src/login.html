@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#e07a5f" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>Sign in · Family Meal Planner</title>
+  <title>Sign in · Meal Planner</title>
   <link rel="icon" href="/pwa/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/pwa/apple-touch-icon.png" />
   <link rel="manifest" href="/pwa/manifest.webmanifest" />
@@ -44,10 +44,12 @@
     .sub { margin: 6px 0 24px; text-align: center; font-size: 13px; color: #78716c; }
     label { display: block; font-size: 12px; font-weight: 700; color: #44403c; margin-bottom: 6px; }
     .field { position: relative; }
+    .field input { padding-right: 64px; }
+    #username { margin-bottom: 14px; }
     input[type="password"], input[type="text"] {
       width: 100%;
       font-size: 16px;
-      padding: 12px 64px 12px 14px;
+      padding: 12px 14px;
       border: 1px solid #d6d3d1;
       border-radius: 12px;
       outline: none;
@@ -99,15 +101,15 @@
 <body>
   <main class="card">
     <img class="logo" src="/pwa/icon.svg" alt="" />
-    <h1>Family Meal Planner</h1>
-    <p class="sub">Enter the household password to continue</p>
+    <h1>Meal Planner</h1>
+    <p class="sub">Sign in with your username and password</p>
     {{ERROR}}
     <form method="post" action="/login" id="login-form">
-      <!-- Lets phone password managers save this login under a name -->
-      <input type="text" name="username" value="family" autocomplete="username" hidden />
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required autofocus />
       <label for="password">Password</label>
       <div class="field">
-        <input id="password" name="password" type="password" autocomplete="current-password" required autofocus />
+        <input id="password" name="password" type="password" autocomplete="current-password" required />
         <button type="button" class="toggle" id="toggle-btn" aria-label="Show password">Show</button>
       </div>
       <button type="submit" id="submit-btn">Sign in</button>

@@ -19,6 +19,7 @@
       --sage-50: 244 246 244; --sage-100: 227 234 227; --sage-200: 200 212 202; --sage-300: 170 187 173;
       --sage-400: 148 167 151; --sage-500: 129 152 133; --sage-600: 103 128 108; --sage-700: 83 104 88;
     }
+    .no-baby .baby-only, html:not(.no-baby) .no-baby-only { display: none !important; }
     @media print {
       @page { margin: 12mm; }
       body { background: #fff !important; padding-bottom: 0 !important; }
@@ -32,6 +33,8 @@
     }
   </style>
   <script>
+    // Accounts with the baby features off hide them before first paint
+    if (window.__PLANNER_BOOT__?.account?.baby === false) document.documentElement.classList.add('no-baby');
     // Apply the saved per-device colour theme before first paint to avoid a flash of the default colours
     try {
       const savedTheme = JSON.parse(localStorage.getItem('planner_theme_v1') || 'null');
@@ -80,16 +83,16 @@
       <div>
         <div class="flex items-center gap-2 flex-wrap">
           <h1 class="text-xl font-bold text-stone-900 flex items-center gap-2">
-            <i class="fa-solid fa-utensils text-brand-500"></i> Family Meal & Baby Nutrition Planner
+            <i class="fa-solid fa-utensils text-brand-500"></i> <span class="baby-only">Family Meal & Baby Nutrition Planner</span><span class="no-baby-only">Meal Planner</span>
           </h1>
           <!-- Dynamic Stage Badge Button -->
-          <button onclick="openBabyStageModal()" id="header-stage-badge" class="px-2.5 py-0.5 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-full text-xs font-bold transition flex items-center gap-1.5 shadow-2xs">
+          <button onclick="openBabyStageModal()" id="header-stage-badge" class="baby-only px-2.5 py-0.5 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-full text-xs font-bold transition flex items-center gap-1.5 shadow-2xs">
             <i class="fa-solid fa-baby text-amber-600"></i>
             <span id="header-stage-label">Stage 1 (6-7 Mo)</span>
             <i class="fa-solid fa-gear text-[10px] text-amber-700 opacity-70"></i>
           </button>
         </div>
-        <p class="text-xs text-stone-500">1-Pan Dinners • Stage-Gated Breakfasts • Iron & Allergen Tracking</p>
+        <p class="text-xs text-stone-500"><span class="baby-only">Weekly Dinners • Stage-Gated Breakfasts • Iron & Allergen Tracking</span><span class="no-baby-only">Weekly Dinners • Grocery List</span></p>
       </div>
 
       <!-- Action Buttons -->
@@ -97,7 +100,7 @@
         <button id="open-dinner-box-btn" class="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
           <i class="fa-solid fa-moon text-indigo-500"></i> Dinners (<span id="dinner-count-badge">0</span>)
         </button>
-        <button id="open-breakfast-box-btn" class="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
+        <button id="open-breakfast-box-btn" class="baby-only px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
           <i class="fa-solid fa-sun text-amber-500"></i> Breakfasts (<span id="breakfast-count-badge">0</span>)
         </button>
 
@@ -135,7 +138,7 @@
     <div id="planner-column" class="lg:col-span-8 space-y-5">
 
       <!-- Dynamic Stage Feeding Guidance Banner -->
-      <section id="stage-banner-card" class="bg-amber-50/90 border border-amber-200/90 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:flex-wrap items-start justify-between gap-3">
+      <section id="stage-banner-card" class="baby-only bg-amber-50/90 border border-amber-200/90 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:flex-wrap items-start justify-between gap-3">
         <div class="flex items-start gap-3 min-w-0 sm:flex-1 sm:basis-0">
           <div class="w-10 h-10 rounded-xl bg-amber-200/80 text-amber-800 flex items-center justify-center text-lg shrink-0 mt-0.5">
             <i class="fa-solid fa-baby-carriage"></i>
@@ -163,7 +166,7 @@
       </section>
 
       <!-- Allergen & Nutrition Radar Tracker -->
-      <section class="bg-white rounded-xl p-4 border border-stone-200 shadow-sm print-card">
+      <section class="baby-only bg-white rounded-xl p-4 border border-stone-200 shadow-sm print-card">
         <div class="flex items-start justify-between gap-2 mb-2">
           <div>
             <h2 class="text-sm font-bold uppercase tracking-wider text-stone-700 flex items-center gap-2">
@@ -353,7 +356,7 @@
       </div>
 
       <div class="p-6 overflow-y-auto space-y-6">
-        <div class="bg-amber-50 border border-amber-200/90 rounded-2xl p-4 flex items-start gap-3 text-amber-900">
+        <div class="baby-only bg-amber-50 border border-amber-200/90 rounded-2xl p-4 flex items-start gap-3 text-amber-900">
           <i class="fa-solid fa-spoon text-amber-600 text-lg mt-0.5"></i>
           <div class="text-xs sm:text-sm leading-relaxed">
             <span class="font-bold block text-amber-950 uppercase tracking-wide mb-0.5" id="cook-mode-stage-badge">
@@ -508,7 +511,8 @@
           <h4><i class="fa-solid fa-calendar-week text-brand-500"></i> Planning the week</h4>
           <ul>
             <li>Each week runs Monday to Sunday. Use the arrows beside the week name to plan ahead or look back, and tap the week name to jump back to this week.</li>
-            <li>Every day has a baby breakfast on the left and a family dinner on the right. The dinner is sized to cover tomorrow's lunch too.</li>
+            <li class="baby-only">Every day has a baby breakfast on the left and a family dinner on the right. The dinner is sized to cover tomorrow's lunch too.</li>
+            <li class="no-baby-only">Every day has a dinner, sized to cover tomorrow's lunch too.</li>
             <li><strong>Change</strong> picks a dinner (search by name, ingredient or tag, or use the filters). <strong>Shuffle</strong> swaps in a random dinner. <strong>Cook Mode</strong> shows the recipe in big print and keeps the screen awake.</li>
             <li><strong>Autofill</strong> fills every day of the week you're viewing at random. <strong>Reset Week</strong> clears that week's dinners and grocery ticks. Both can be undone.</li>
             <li>When a week is empty, a card at the top offers to copy the previous week, load a saved plan or Autofill.</li>
@@ -518,13 +522,14 @@
         <section>
           <h4><i class="fa-solid fa-book-open text-brand-500"></i> Recipes</h4>
           <ul>
-            <li><strong>Dinners</strong> and <strong>Breakfasts</strong> open the recipe boxes, where you can add, edit and delete recipes.</li>
+            <li class="baby-only"><strong>Dinners</strong> and <strong>Breakfasts</strong> open the recipe boxes, where you can add, edit and delete recipes.</li>
+            <li class="no-baby-only"><strong>Dinners</strong> opens the recipe box, where you can add, edit and delete recipes.</li>
             <li>Ingredient names suggest ones already used in other recipes. Picking one fills in its usual unit, aisle and amount (the amount only if you haven't typed one), and a note underneath shows how many recipes use it.</li>
             <li>If you type a name that differs from an existing one only by capitals or plurals, like "sweet potato", it's saved with the existing spelling so the grocery list combines it properly.</li>
-            <li>Tags mark allergens and nutrition for the radar. Each breakfast also has a minimum stage, which controls when it unlocks.</li>
+            <li class="baby-only">Tags mark allergens and nutrition for the radar. Each breakfast also has a minimum stage, which controls when it unlocks.</li>
           </ul>
         </section>
-        <section>
+        <section class="baby-only">
           <h4><i class="fa-solid fa-baby text-brand-500"></i> Baby stages</h4>
           <ul>
             <li>Open <strong>Stage Settings</strong> and enter the birthdate. The stage then moves forward on its own as baby grows.</li>
@@ -533,7 +538,7 @@
             <li>Open <strong>Full stage guide &amp; safety</strong> on the stage banner for textures, amounts, drinks, iron, allergens and choking safety, based on Health Canada and Canadian Paediatric Society guidance.</li>
           </ul>
         </section>
-        <section>
+        <section class="baby-only">
           <h4><i class="fa-solid fa-shield-halved text-brand-500"></i> Allergen &amp; nutrition radar</h4>
           <ul>
             <li>A green check means the allergen is in at least one meal of the week you're viewing. It's picked up from recipe tags and from ingredient names (for example, soy sauce counts as soy and wheat, but peanut butter doesn't count as dairy).</li>
@@ -1363,9 +1368,23 @@
       }
     }
 
+    // Signed-in site only. Opened from GitHub Pages there's no account and every feature shows.
+    const BOOT_ACCOUNT = window.__PLANNER_BOOT__?.account || null;
+    const BABY_MODE = !BOOT_ACCOUNT || BOOT_ACCOUNT.baby;
+    if (!BABY_MODE) document.title = 'Weekly Meal Planner';
+
+    function clearLocalData() {
+      Object.keys(localStorage).filter(k => k.startsWith('family_') || k === 'planner_sync_v1').forEach(k => localStorage.removeItem(k));
+    }
+
+    // This device's copy belongs to one account, so drop it when a different account signs in.
+    // Copies saved before accounts existed belong to account 1.
+    const localSyncMeta = readLocal('planner_sync_v1', null);
+    if (BOOT_ACCOUNT && (localSyncMeta ? localSyncMeta.account || 1 : null) !== BOOT_ACCOUNT.id) clearLocalData();
+
     // State Initialization under storage key (_v10, weeks and checks _v11)
     let dinners = readLocal('family_dinners_v10', null) || DEFAULT_DINNERS;
-    let breakfasts = readLocal('family_breakfasts_v10', null) || DEFAULT_BREAKFASTS;
+    let breakfasts = readLocal('family_breakfasts_v10', null) || (BABY_MODE ? DEFAULT_BREAKFASTS : []);
 
     // Older versions kept one undated week; it becomes the current week
     let weeks = readLocal('family_weeks_v11', null) || { [getWeekKey()]: readLocal('family_weekly_plan_v10', null) || DEFAULT_WEEK_PLAN };
@@ -1466,6 +1485,7 @@
 
     // Get all breakfasts unlocked for the current stage
     function getAvailableBreakfasts() {
+      if (!BABY_MODE) return [];
       return breakfasts.filter(b => isBreakfastUnlocked(b, selectedStageKey));
     }
 
@@ -1586,7 +1606,7 @@
       const stats = {};
       const tally = (counts, value) => { counts.set(value, (counts.get(value) || 0) + 1); };
       const top = counts => [...counts.entries()].reduce((best, entry) => (entry[1] > best[1] ? entry : best), [null, 0])[0];
-      [...dinners, ...breakfasts].forEach(recipe => {
+      [...dinners, ...(BABY_MODE ? breakfasts : [])].forEach(recipe => {
         if (excludeRecipeId && recipe.id === excludeRecipeId) return;
         const seen = new Set();
         (recipe.ingredients || []).forEach(i => {
@@ -1773,7 +1793,7 @@
         let breakfast = breakfasts.find(b => b.id === assignment.breakfast);
 
         // If currently assigned breakfast is locked for current stage, fallback to first available
-        if (breakfast && !isBreakfastUnlocked(breakfast, selectedStageKey)) {
+        if (BABY_MODE && breakfast && !isBreakfastUnlocked(breakfast, selectedStageKey)) {
           breakfast = availableBreakfasts[0] || breakfast;
           currentWeeklyPlan[day].breakfast = breakfast.id;
         }
@@ -1816,7 +1836,7 @@
 
           <div class="p-4 grid grid-cols-1 md:grid-cols-12 gap-4">
             <!-- Baby Breakfast Strip (Stage-Filtered Options) -->
-            <div class="md:col-span-4 ${isPast ? 'bg-stone-300/40 border-stone-300' : 'bg-sage-50/70 border-sage-100/80'} rounded-lg p-3 border flex flex-col justify-between gap-2.5">
+            ${BABY_MODE ? `<div class="md:col-span-4 ${isPast ? 'bg-stone-300/40 border-stone-300' : 'bg-sage-50/70 border-sage-100/80'} rounded-lg p-3 border flex flex-col justify-between gap-2.5">
               <div class="space-y-1.5">
                 <div class="flex items-center justify-between">
                   <span class="text-[10px] uppercase font-bold tracking-wider ${isPast ? 'text-stone-500' : 'text-sage-700'} flex items-center gap-1">
@@ -1835,10 +1855,10 @@
               <div class="flex flex-wrap gap-1 pt-1 border-t ${isPast ? 'border-stone-300' : 'border-sage-100/60'}">
                 ${breakfast && breakfast.tags ? breakfast.tags.map(t => `<span class="px-1.5 py-0.5 bg-white ${isPast ? 'text-stone-500 border-stone-200' : 'text-sage-700 border-sage-200/60'} rounded text-[9px] font-bold border shadow-2xs">${esc(t)}</span>`).join('') : ''}
               </div>
-            </div>
+            </div>` : ''}
 
             <!-- Family Dinner & Next Day Lunch -->
-            <div class="md:col-span-8 flex flex-col justify-between">
+            <div class="${BABY_MODE ? 'md:col-span-8' : 'md:col-span-12'} flex flex-col justify-between">
               ${dinner ? `
                 <div>
                   <div class="flex items-center justify-between mb-1">
@@ -1856,7 +1876,7 @@
                   <p class="text-xs ${isPast ? 'text-stone-500' : 'text-stone-600'} mb-2.5">${esc(dinner.instructions || '')}</p>
                   
                   <!-- Dynamic Stage-Adaptive Reminder -->
-                  <div class="${isPast ? 'bg-stone-300/50 border-stone-300 text-stone-600' : 'bg-amber-50/80 border-amber-200/70 text-amber-900'} border rounded-lg px-2.5 py-1.5 text-xs flex items-center gap-2">
+                  <div class="baby-only ${isPast ? 'bg-stone-300/50 border-stone-300 text-stone-600' : 'bg-amber-50/80 border-amber-200/70 text-amber-900'} border rounded-lg px-2.5 py-1.5 text-xs flex items-center gap-2">
                     <i class="fa-solid fa-spoon ${isPast ? 'text-stone-500' : 'text-amber-600'} text-xs"></i>
                     <span class="text-[11px] leading-snug">
                       <strong class="${isPast ? 'text-stone-700' : 'text-amber-950'} font-semibold">Baby (${currentStage.shortLabel}):</strong> ${currentStage.reminder}
@@ -2075,7 +2095,7 @@
       days.forEach(day => {
         const plan = currentWeeklyPlan[day];
         if (!plan) return;
-        const meals = [dinners.find(r => r.id === plan.dinner), breakfasts.find(b => b.id === plan.breakfast)];
+        const meals = [dinners.find(r => r.id === plan.dinner), BABY_MODE && breakfasts.find(b => b.id === plan.breakfast)];
         meals.forEach(meal => (meal?.ingredients || []).forEach(ing => {
           const name = (ing.name || '').trim();
           if (!name) return;
@@ -2577,7 +2597,7 @@
             ${[...new Set([...STANDARD_UNITS, unit])].map(u => `<option value="${esc(u)}" ${u === unit ? 'selected' : ''}>${esc(u)}</option>`).join('')}
           </select>
           <select class="ing-cat text-[11px] rounded-lg border border-stone-300 px-1 py-1.5 focus:outline-none bg-white">
-            ${[...new Set([...AISLES, category])].map(a => `<option value="${esc(a)}" ${a === category ? 'selected' : ''}>${esc(a)}</option>`).join('')}
+            ${[...new Set([...AISLES.filter(a => BABY_MODE || a !== 'Baby Staples & Pouches'), category])].map(a => `<option value="${esc(a)}" ${a === category ? 'selected' : ''}>${esc(a)}</option>`).join('')}
           </select>
           <button type="button" onclick="this.closest('.ing-row').remove()" class="text-stone-300 hover:text-rose-500 p-1">
             <i class="fa-solid fa-xmark"></i>
@@ -2894,7 +2914,7 @@
     document.getElementById('autofill-btn').addEventListener('click', () => {
       if (dinners.length === 0) return showToast('Add some dinners first.');
       const availableBfs = getAvailableBreakfasts();
-      if (availableBfs.length === 0) return showToast('No breakfasts are unlocked for the current stage.');
+      if (BABY_MODE && availableBfs.length === 0) return showToast('No breakfasts are unlocked for the current stage.');
 
       runUndoable('Before Autofill', `Autofilled ${weekPhrase()}.`, () => {
         const shuffledDinners = shuffled(dinners);
@@ -2902,7 +2922,7 @@
         DAYS_OF_WEEK.forEach((day, idx) => {
           currentWeeklyPlan[day] = {
             dinner: shuffledDinners[idx % shuffledDinners.length].id,
-            breakfast: shuffledBfs[idx % shuffledBfs.length].id
+            breakfast: shuffledBfs.length ? shuffledBfs[idx % shuffledBfs.length].id : null
           };
         });
         groceryChecks[viewedWeekKey] = [];
@@ -3213,7 +3233,7 @@
           <div class="${box(serverMode)}">
             <p class="font-bold text-stone-900 mb-1 flex items-center gap-1.5"><i class="fa-solid fa-lock text-brand-500"></i> Signed-in household planner ${youAreHere(serverMode)}</p>
             <ul>
-              <li>Saved to the cloud. Everyone signed in with the household password shares one planner, and changes show up on other devices within about 10 seconds, or as soon as the app is reopened.</li>
+              <li>Saved to the cloud under your account. Everyone signed in to the same account shares one planner, and other accounts can't see it. Changes show up on other devices within about 10 seconds, or as soon as the app is reopened.</li>
               <li>The badge in the header shows <strong>Synced</strong>, <strong>Saving…</strong> or <strong>Offline</strong>.</li>
               <li>Each device also keeps its own copy, so the planner opens and works without a connection. Changes made offline sync when the connection is back.</li>
               <li>If two people change different things at the same time, both changes are kept. If they change the same thing (for example the same week's plan), the last save wins.</li>
@@ -3226,7 +3246,7 @@
               <li>No sign-in. Everything is saved only in the browser you're using, on that device (its local storage).</li>
               <li>Nothing is shared: a phone and a laptop each keep their own separate planner, and so do two different browsers on the same computer.</li>
               <li>Clearing your browser data, or using a private window, loses it.</li>
-              <li><strong>Export:</strong> open <strong>History</strong>, then <strong>Download backup</strong>. It saves a <code>.json</code> file with everything: recipes, every week's plan, grocery ticks, pantry items, extras and baby settings. Do this now and then, and keep the file somewhere safe.</li>
+              <li><strong>Export:</strong> open <strong>History</strong>, then <strong>Download backup</strong>. It saves a <code>.json</code> file with everything: recipes, every week's plan, grocery ticks, pantry items, extras and settings. Do this now and then, and keep the file somewhere safe.</li>
               <li><strong>Import:</strong> open <strong>History</strong>, then <strong>Restore from file</strong>, and pick a backup file. It replaces the planner in this browser with the file's contents. If you pick the wrong file, tap <strong>Undo</strong> within 10 seconds.</li>
               <li>Export on one device and import on another to copy your planner to a new phone or browser, or into the signed-in planner.</li>
               <li>There's no automatic history or saved plans, but Undo works.</li>
@@ -3390,7 +3410,7 @@
 
     function saveSyncMeta() {
       if (!serverMode) return;
-      localStorage.setItem(SYNC_META_KEY, JSON.stringify({ version: serverVersion, bootServedAt: lastBootAt, lastSynced }));
+      localStorage.setItem(SYNC_META_KEY, JSON.stringify({ account: BOOT_ACCOUNT.id, version: serverVersion, bootServedAt: lastBootAt, lastSynced }));
     }
 
     function setSyncStatus(status) {
@@ -3575,7 +3595,7 @@
         try {
           if (window.caches) await Promise.all((await caches.keys()).map(k => caches.delete(k)));
         } catch (err) {}
-        localStorage.removeItem(SYNC_META_KEY);
+        clearLocalData();
         e.target.submit();
       });
     }

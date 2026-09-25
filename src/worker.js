@@ -70,23 +70,23 @@ async function handle(request, env) {
 
   if (pathname === '/login') {
     if (method === 'POST') return handleLogin(request, env);
-    if (await isAuthenticated(request, env)) return redirect('/');
+    if (await sessionAccount(request, env)) return redirect('/');
     return loginPage();
   }
   if (pathname === '/logout' && method === 'POST') {
     return redirect('/login', { 'Set-Cookie': `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0` });
   }
 
-  const authed = await isAuthenticated(request, env);
+  const account = await sessionAccount(request, env);
 
   if (pathname === '/' || pathname === '/index.html') {
-    if (!authed) return redirect('/login');
-    return appPage(env);
+    if (!account) return redirect('/login');
+    return appPage(env, account);
   }
 
   if (pathname.startsWith('/api/')) {
-    if (!authed) return json({ error: 'Not signed in' }, 401);
-    return handleApi(request, env, url);
+    if (!account) return json({ error: 'Not signed in' }, 401);
+    return handleApi(request, env, url, account.id);
   }
 
   return new Response('Not found', { status: 404, headers: SECURITY_HEADERS });
@@ -94,12 +94,17 @@ async function handle(request, env) {
 
 // ---------- Pages ----------
 
-async function appPage(env) {
-  const { state, version } = await loadState(env);
+async function appPage(env, account) {
+  const { state, version } = await loadState(env, account.id);
   // Embed the current state so the first paint already shows synced data
-  const boot = JSON.stringify({ version, state, servedAt: Date.now() }).replace(/</g, '\\u003c');
+  const boot = JSON.stringify({
+    version,
+    state,
+    servedAt: Date.now(),
+    account: { id: account.id, baby: !!account.baby }
+  }).replace(/</g, '\\u003c');
   const html = APP_HTML.replace('<head>', `<head>\n  <script>window.__PLANNER_BOOT__ = ${boot};</script>`);
-  const token = await createSessionToken(env);
+  const token = await createSessionToken(env, account);
   return new Response(html, {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
@@ -131,21 +136,24 @@ async function handleLogin(request, env) {
     return loginPage(`Too many attempts. Try again in ${minutes} minute${minutes === 1 ? '' : 's'}.`, 429);
   }
 
+  let username = '';
   let password = '';
   try {
     const form = await request.formData();
+    username = String(form.get('username') || '').trim().toLowerCase();
     password = String(form.get('password') || '');
   } catch {
     return loginPage('Something went wrong. Please try again.', 400);
   }
 
-  if (!env.PLANNER_PASSWORD || !env.SESSION_SECRET) {
+  const account = await env.DB.prepare('SELECT id, password_secret FROM accounts WHERE username = ?').bind(username).first();
+  if (!env.SESSION_SECRET || (account && !env[account.password_secret])) {
     return loginPage('The server is missing its password configuration.', 500);
   }
 
-  if (await safeEqual(password, env.PLANNER_PASSWORD)) {
+  if (account && await safeEqual(password, env[account.password_secret])) {
     await env.DB.prepare('DELETE FROM login_attempts WHERE ip = ?').bind(ip).run();
-    const token = await createSessionToken(env);
+    const token = await createSessionToken(env, account);
     return redirect('/', { 'Set-Cookie': sessionCookie(token) });
   }
 
@@ -155,7 +163,7 @@ async function handleLogin(request, env) {
        fails = CASE WHEN ?2 - first_fail_at >= ?3 THEN 1 ELSE fails + 1 END,
        first_fail_at = CASE WHEN ?2 - first_fail_at >= ?3 THEN ?2 ELSE first_fail_at END`
   ).bind(ip, now, FAILED_LOGIN_WINDOW_MS).run();
-  return loginPage('That password isn\'t right.', 401);
+  return loginPage('That username or password isn\'t right.', 401);
 }
 
 async function safeEqual(a, b) {
@@ -167,11 +175,11 @@ async function safeEqual(a, b) {
   return crypto.subtle.timingSafeEqual(ha, hb);
 }
 
-// Keyed on the password too, so changing the password signs every device out
-async function hmacKey(env) {
+// Keyed on the account's password too, so changing it signs that account's devices out
+async function hmacKey(env, password) {
   return crypto.subtle.importKey(
     'raw',
-    new TextEncoder().encode(`${env.SESSION_SECRET}|${env.PLANNER_PASSWORD}`),
+    new TextEncoder().encode(`${env.SESSION_SECRET}|${password}`),
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign', 'verify']
@@ -187,41 +195,51 @@ function fromB64url(str) {
   return Uint8Array.from(bin, c => c.charCodeAt(0));
 }
 
-async function createSessionToken(env) {
+async function createSessionToken(env, account) {
   const expires = Date.now() + SESSION_DAYS * 86400 * 1000;
-  const sig = await crypto.subtle.sign('HMAC', await hmacKey(env), new TextEncoder().encode(`v1.${expires}`));
-  return `${expires}.${b64url(sig)}`;
+  const key = await hmacKey(env, env[account.password_secret]);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`v2.${account.id}.${expires}`));
+  return `${account.id}.${expires}.${b64url(sig)}`;
 }
 
 function sessionCookie(token) {
   return `${COOKIE_NAME}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_DAYS * 86400}`;
 }
 
-async function isAuthenticated(request, env) {
-  if (!env.SESSION_SECRET || !env.PLANNER_PASSWORD) return false;
+// Returns the signed-in account, or null
+async function sessionAccount(request, env) {
+  if (!env.SESSION_SECRET) return null;
   const cookie = request.headers.get('Cookie') || '';
   const match = cookie.match(new RegExp(`(?:^|;\\s*)${COOKIE_NAME}=([^;]+)`));
-  if (!match) return false;
-  const [expires, sig] = match[1].split('.');
-  if (!expires || !sig || Number(expires) < Date.now()) return false;
+  if (!match) return null;
+  const parts = match[1].split('.');
+  // Cookies from before accounts existed ("expires.sig", signed "v1.expires") belong to account 1.
+  // The app page swaps them for a new cookie, so this can go once they've expired (March 2027).
+  const [id, expires, sig] = parts.length === 2 ? ['1', ...parts] : parts;
+  const message = parts.length === 2 ? `v1.${expires}` : `v2.${id}.${expires}`;
+  if (!/^\d+$/.test(id || '') || !expires || !sig || Number(expires) < Date.now()) return null;
+  const account = await env.DB.prepare('SELECT id, password_secret, baby FROM accounts WHERE id = ?').bind(Number(id)).first();
+  const password = account && env[account.password_secret];
+  if (!password) return null;
   try {
-    return await crypto.subtle.verify('HMAC', await hmacKey(env), fromB64url(sig), new TextEncoder().encode(`v1.${expires}`));
+    const valid = await crypto.subtle.verify('HMAC', await hmacKey(env, password), fromB64url(sig), new TextEncoder().encode(message));
+    return valid ? account : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
 // ---------- API ----------
 
-async function handleApi(request, env, url) {
+async function handleApi(request, env, url, account) {
   const { pathname } = url;
   const method = request.method;
 
   if (pathname === '/api/state' && method === 'GET') {
     const since = Number(url.searchParams.get('since'));
-    const version = await currentVersion(env);
+    const version = await currentVersion(env, account);
     if (url.searchParams.has('since') && since === version) return json({ version, unchanged: true });
-    return json(await loadState(env));
+    return json(await loadState(env, account));
   }
 
   if (pathname === '/api/state' && method === 'PUT') {
@@ -231,13 +249,13 @@ async function handleApi(request, env, url) {
     if (keys.some(k => !isValidKey(k))) return json({ error: 'Unknown key' }, 400);
     const label = typeof body.snapshot === 'string' ? body.snapshot.slice(0, 120) : null;
     const week = typeof body.week === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.week) ? body.week : null;
-    return json(await applyChanges(env, body.changes, label, week));
+    return json(await applyChanges(env, account, body.changes, label, week));
   }
 
   if (pathname === '/api/snapshots' && method === 'GET') {
     const { results } = await env.DB.prepare(
-      'SELECT id, created_at, kind, label, week, summary FROM snapshots ORDER BY id DESC LIMIT 200'
-    ).all();
+      'SELECT id, created_at, kind, label, week, summary FROM snapshots WHERE account = ? ORDER BY id DESC LIMIT 200'
+    ).bind(account).all();
     return json({ snapshots: results.map(r => ({ ...r, summary: JSON.parse(r.summary) })) });
   }
 
@@ -246,19 +264,19 @@ async function handleApi(request, env, url) {
     const label = typeof body?.label === 'string' ? body.label.trim().slice(0, 120) : '';
     if (!label) return json({ error: 'A name is required' }, 400);
     const week = typeof body.week === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.week) ? body.week : null;
-    const { state } = await loadState(env);
-    const row = await snapshotStatement(env, 'saved', label, week, state, Date.now()).first();
+    const { state } = await loadState(env, account);
+    const row = await snapshotStatement(env, account, 'saved', label, week, state, Date.now()).first();
     return json({ id: row.id });
   }
 
   const snapMatch = pathname.match(/^\/api\/snapshots\/(\d+)$/);
   if (snapMatch && method === 'GET') {
-    const row = await env.DB.prepare('SELECT id, created_at, kind, label, week, data FROM snapshots WHERE id = ?').bind(Number(snapMatch[1])).first();
+    const row = await env.DB.prepare('SELECT id, created_at, kind, label, week, data FROM snapshots WHERE id = ? AND account = ?').bind(Number(snapMatch[1]), account).first();
     if (!row) return json({ error: 'Not found' }, 404);
     return json({ ...row, data: JSON.parse(row.data) });
   }
   if (snapMatch && method === 'DELETE') {
-    await env.DB.prepare('DELETE FROM snapshots WHERE id = ?').bind(Number(snapMatch[1])).run();
+    await env.DB.prepare('DELETE FROM snapshots WHERE id = ? AND account = ?').bind(Number(snapMatch[1]), account).run();
     return json({ ok: true });
   }
 
@@ -277,62 +295,62 @@ async function readJson(request) {
   }
 }
 
-async function currentVersion(env) {
-  return (await env.DB.prepare('SELECT version FROM meta WHERE id = 1').first('version')) || 0;
+async function currentVersion(env, account) {
+  return (await env.DB.prepare('SELECT version FROM meta WHERE account = ?').bind(account).first('version')) || 0;
 }
 
-async function loadState(env) {
+async function loadState(env, account) {
   const [rows, version] = await Promise.all([
-    env.DB.prepare('SELECT key, value FROM state').all(),
-    currentVersion(env)
+    env.DB.prepare('SELECT key, value FROM state WHERE account = ?').bind(account).all(),
+    currentVersion(env, account)
   ]);
   const state = {};
   for (const r of rows.results) state[r.key] = JSON.parse(r.value);
   return { state, version };
 }
 
-async function applyChanges(env, changes, label, week) {
+async function applyChanges(env, account, changes, label, week) {
   const now = Date.now();
-  const { state, version } = await loadState(env);
+  const { state, version } = await loadState(env, account);
   const statements = [];
 
   // Checkpoint the pre-change state before destructive actions and at the start of each editing session
   if (version > 0) {
-    const lastSnapshotAt = await env.DB.prepare('SELECT MAX(created_at) AS t FROM snapshots').first('t');
+    const lastSnapshotAt = await env.DB.prepare('SELECT MAX(created_at) AS t FROM snapshots WHERE account = ?').bind(account).first('t');
     if (label) {
-      statements.push(snapshotStatement(env, 'undo', label, week, state, now));
+      statements.push(snapshotStatement(env, account, 'undo', label, week, state, now));
     } else if (!lastSnapshotAt || now - lastSnapshotAt > AUTO_SNAPSHOT_GAP_MS) {
-      statements.push(snapshotStatement(env, 'auto', 'Automatic checkpoint', week, state, now));
+      statements.push(snapshotStatement(env, account, 'auto', 'Automatic checkpoint', week, state, now));
     }
   }
 
   for (const [key, value] of Object.entries(changes)) {
     if (value === null) {
-      statements.push(env.DB.prepare('DELETE FROM state WHERE key = ?').bind(key));
+      statements.push(env.DB.prepare('DELETE FROM state WHERE account = ? AND key = ?').bind(account, key));
     } else {
       statements.push(env.DB.prepare(
-        `INSERT INTO state (key, value, updated_at) VALUES (?1, ?2, ?3)
-         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
-      ).bind(key, JSON.stringify(value), now));
+        `INSERT INTO state (account, key, value, updated_at) VALUES (?1, ?2, ?3, ?4)
+         ON CONFLICT(account, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
+      ).bind(account, key, JSON.stringify(value), now));
     }
   }
 
   statements.push(env.DB.prepare(
-    `DELETE FROM snapshots WHERE kind != 'saved' AND id NOT IN
-       (SELECT id FROM snapshots WHERE kind != 'saved' ORDER BY id DESC LIMIT ?)`
-  ).bind(MAX_HISTORY_SNAPSHOTS));
+    `DELETE FROM snapshots WHERE account = ?1 AND kind != 'saved' AND id NOT IN
+       (SELECT id FROM snapshots WHERE account = ?1 AND kind != 'saved' ORDER BY id DESC LIMIT ?2)`
+  ).bind(account, MAX_HISTORY_SNAPSHOTS));
   statements.push(env.DB.prepare(
-    'INSERT INTO meta (id, version) VALUES (1, 1) ON CONFLICT(id) DO UPDATE SET version = version + 1 RETURNING version'
-  ));
+    'INSERT INTO meta (account, version) VALUES (?, 1) ON CONFLICT(account) DO UPDATE SET version = version + 1 RETURNING version'
+  ).bind(account));
 
   const results = await env.DB.batch(statements);
   return { version: results[results.length - 1].results[0].version };
 }
 
-function snapshotStatement(env, kind, label, week, state, now) {
+function snapshotStatement(env, account, kind, label, week, state, now) {
   return env.DB.prepare(
-    'INSERT INTO snapshots (created_at, kind, label, week, summary, data) VALUES (?, ?, ?, ?, ?, ?) RETURNING id'
-  ).bind(now, kind, label, week, JSON.stringify(summarize(state)), JSON.stringify(state));
+    'INSERT INTO snapshots (account, created_at, kind, label, week, summary, data) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id'
+  ).bind(account, now, kind, label, week, JSON.stringify(summarize(state)), JSON.stringify(state));
 }
 
 // Dinner titles for the most recent planned weeks, so the History list can show what each entry contains
