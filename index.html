@@ -3340,6 +3340,7 @@
         Object.keys(getSyncedState()).forEach(k => { if (!(k in data)) setSyncedValue(k, undefined); });
         Object.entries(data).forEach(([k, v]) => setSyncedValue(k, v));
         currentWeeklyPlan = weeks[viewedWeekKey] || createWeek();
+        ensureLunchesMatchStage();
       });
       closeModal('history-modal');
     }
