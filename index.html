@@ -94,7 +94,7 @@
             <i class="fa-solid fa-gear text-[10px] text-amber-700 opacity-70"></i>
           </button>
         </div>
-        <p class="text-xs text-stone-500"><span class="baby-only">Weekly Dinners • Stage-Gated Breakfasts • Iron & Allergen Tracking</span><span class="no-baby-only"><span class="no-courses-only">Weekly Dinners</span><span class="courses-only">Weekly Meals</span> • Grocery List</span></p>
+        <p class="text-xs text-stone-500"><span class="baby-only">Weekly Dinners • Stage-Gated Lunches • Iron & Allergen Tracking</span><span class="no-baby-only"><span class="no-courses-only">Weekly Dinners</span><span class="courses-only">Weekly Meals</span> • Grocery List</span></p>
       </div>
 
       <!-- Action Buttons -->
@@ -102,8 +102,8 @@
         <button id="open-dinner-box-btn" class="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
           <i class="fa-solid fa-moon text-indigo-500"></i> <span class="no-courses-only">Dinners</span><span class="courses-only">Recipes</span> (<span id="dinner-count-badge">0</span>)
         </button>
-        <button id="open-breakfast-box-btn" class="baby-only px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
-          <i class="fa-solid fa-sun text-amber-500"></i> Breakfasts (<span id="breakfast-count-badge">0</span>)
+        <button id="open-lunch-box-btn" class="baby-only px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
+          <i class="fa-solid fa-bowl-food text-amber-500"></i> Lunches (<span id="lunch-count-badge">0</span>)
         </button>
 
         <button onclick="openHistoryModal()" class="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-xs font-semibold transition flex items-center gap-1.5" title="Saved plans, history, and backup files">
@@ -294,7 +294,7 @@
         <div>
           <div class="flex items-center justify-between mb-1">
             <label class="font-bold text-stone-800">Feeding Stage (Or manual override)</label>
-            <span class="text-[10px] text-stone-400">Controls unlocked breakfast recipes</span>
+            <span class="text-[10px] text-stone-400">Controls unlocked lunch recipes</span>
           </div>
           <select id="stage-override-select" onchange="onStageSelectChanged(this.value)" class="w-full text-xs rounded-xl border border-stone-300 px-3 py-2.5 bg-white font-medium focus:ring-1 focus:ring-brand-500 focus:outline-none">
             <option value="stage_1">Stage 1: 6–7 Months (Silky Purees & Smooth Mashes)</option>
@@ -306,24 +306,24 @@
 
         <!-- Stage Comparison Preview Cards -->
         <div class="space-y-2 pt-2 border-t border-stone-100">
-          <h4 class="font-bold text-[11px] uppercase tracking-wider text-stone-500">Stage Breakfast & Texture Rules</h4>
+          <h4 class="font-bold text-[11px] uppercase tracking-wider text-stone-500">Stage Lunch & Texture Rules</h4>
           
           <div class="grid grid-cols-1 gap-2 text-[11px]">
             <div class="p-2.5 rounded-xl border border-amber-200 bg-amber-50/60">
-              <span class="font-bold text-amber-950 block">Stage 1 (6–7m): Smooth Puree & Thinned Oats</span>
-              <span class="text-amber-900">Unlocks Stage 1 breakfasts. Thinned infant oat cereal, purees, thinned peanut/almond butter, soft egg yolk.</span>
+              <span class="font-bold text-amber-950 block">Stage 1 (6–7m): Purées & Soft Mashes</span>
+              <span class="text-amber-900">Unlocks Stage 1 lunches. Puréed or mashed meat, fish, lentils, tofu and egg, soft-cooked vegetable pieces, toast strips.</span>
             </div>
             <div class="p-2.5 rounded-xl border border-stone-200 bg-stone-50">
-              <span class="font-bold text-stone-900 block">Stage 2 (8–9m): Thick Porridge & Soft Finger Strips</span>
-              <span class="text-stone-600">Unlocks Stage 1 & 2 breakfasts. Whole fluffy scrambled eggs, soft banana spears, chia/hemp yogurts.</span>
+              <span class="font-bold text-stone-900 block">Stage 2 (8–9m): Lumpy Mashes & Soft Strips</span>
+              <span class="text-stone-600">Unlocks Stage 1 & 2 lunches. Thicker, lumpier mashes, soft chopped foods, and soft strips baby can hold.</span>
             </div>
             <div class="p-2.5 rounded-xl border border-stone-200 bg-stone-50">
-              <span class="font-bold text-stone-900 block">Stage 3 (10–12m): Pancake Bites & Chopped Fruit</span>
-              <span class="text-stone-600">Unlocks Stages 1–3. Baby oat/banana finger pancakes, chopped berries, toast strips with thin nut butter.</span>
+              <span class="font-bold text-stone-900 block">Stage 3 (10–12m): Chopped & Tender Table Food</span>
+              <span class="text-stone-600">Unlocks Stages 1–3. Ground, mashed or chopped tender foods: soft-cooked vegetables, cheese cubes, small pieces of dry toast.</span>
             </div>
             <div class="p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/60">
-              <span class="font-bold text-emerald-950 block">Stage 4 (12m+): Family Breakfast & Cow's Milk</span>
-              <span class="text-emerald-900">All breakfasts unlocked. Regular rolled oats, whole cow's milk, honey allowed as natural sweetener.</span>
+              <span class="font-bold text-emerald-950 block">Stage 4 (12m+): Family Lunch & Cow's Milk</span>
+              <span class="text-emerald-900">All lunches unlocked. Family foods cut into manageable pieces, whole cow's milk, honey allowed as natural sweetener.</span>
             </div>
           </div>
         </div>
@@ -483,7 +483,7 @@
         </div>
         <div>
           <div class="flex items-center justify-between mb-2">
-            <h4 class="font-bold text-stone-800">Secondary <span class="font-normal text-stone-400">(breakfasts, Autofill)</span></h4>
+            <h4 class="font-bold text-stone-800">Secondary <span class="font-normal text-stone-400">(lunches, Autofill)</span></h4>
             <label class="flex items-center gap-1.5 text-stone-500 cursor-pointer">Custom <input type="color" id="sage-color-input" oninput="setThemeColor('sage', this.value)" class="w-7 h-7 rounded cursor-pointer border border-stone-200 p-0" /></label>
           </div>
           <div id="sage-swatches" class="flex flex-wrap gap-2"></div>
@@ -513,7 +513,7 @@
           <h4><i class="fa-solid fa-calendar-week text-brand-500"></i> Planning the week</h4>
           <ul>
             <li>Each week runs Monday to Sunday. Use the arrows beside the week name to plan ahead or look back, and tap the week name to jump back to this week.</li>
-            <li class="baby-only">Every day has a baby breakfast on the left and a family dinner on the right. The dinner is sized to cover tomorrow's lunch too.</li>
+            <li class="baby-only">Every day has a baby lunch on the left and a family dinner on the right. The dinner is sized to cover tomorrow's lunch too.</li>
             <li class="no-baby-only no-courses-only">Every day has a dinner, sized to cover tomorrow's lunch too.</li>
             <li class="courses-only">Every day has a dinner. Use <strong>+ Breakfast</strong>, <strong>+ Lunch</strong>, <strong>+ Dessert</strong> and <strong>+ Snack</strong> under it to add the optional meals. Tap one to open it in Cook Mode, the pencil to change it, or the cross to remove it.</li>
             <li class="courses-only">Autofill and Shuffle only change dinners. Breakfasts, lunches, desserts and snacks stay as you set them, and they're added to the grocery list too.</li>
@@ -526,12 +526,12 @@
         <section>
           <h4><i class="fa-solid fa-book-open text-brand-500"></i> Recipes</h4>
           <ul>
-            <li class="baby-only"><strong>Dinners</strong> and <strong>Breakfasts</strong> open the recipe boxes, where you can add, edit and delete recipes.</li>
+            <li class="baby-only"><strong>Dinners</strong> and <strong>Lunches</strong> open the recipe boxes, where you can add, edit and delete recipes.</li>
             <li class="no-baby-only no-courses-only"><strong>Dinners</strong> opens the recipe box, where you can add, edit and delete recipes.</li>
             <li class="courses-only"><strong>Recipes</strong> opens the recipe box, where you can add, edit and delete recipes. Each recipe has a course (breakfast, lunch, dinner, dessert or snack), which decides where it can be planned.</li>
             <li>Ingredient names suggest ones already used in other recipes. Picking one fills in its usual unit, aisle and amount (the amount only if you haven't typed one), and a note underneath shows how many recipes use it.</li>
             <li>If you type a name that differs from an existing one only by capitals or plurals, like "sweet potato", it's saved with the existing spelling so the grocery list combines it properly.</li>
-            <li class="baby-only">Tags mark allergens and nutrition for the radar. Each breakfast also has a minimum stage, which controls when it unlocks.</li>
+            <li class="baby-only">Tags mark allergens and nutrition for the radar. Each lunch also has a minimum stage, which controls when it unlocks.</li>
           </ul>
         </section>
         <section class="baby-only">
@@ -539,7 +539,7 @@
           <ul>
             <li>Open <strong>Stage Settings</strong> and enter the birthdate. The stage then moves forward on its own as baby grows.</li>
             <li>Choosing a stage by hand overrides the automatic one until the birthdate is entered again.</li>
-            <li>The stage decides which breakfasts are available and the baby preparation tip shown with each dinner.</li>
+            <li>The stage decides which lunches are available and the baby preparation tip shown with each dinner.</li>
             <li>Open <strong>Full stage guide &amp; safety</strong> on the stage banner for textures, amounts, drinks, iron, allergens and choking safety, based on Health Canada and Canadian Paediatric Society guidance.</li>
           </ul>
         </section>
@@ -610,24 +610,24 @@
     </div>
   </div>
 
-  <!-- Baby Breakfast Box Modal with Stage Tags -->
-  <div id="breakfast-box-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+  <!-- Baby Lunch Box Modal with Stage Tags -->
+  <div id="lunch-box-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-xl overflow-hidden">
       <div class="p-4 border-b border-stone-200 flex justify-between items-center">
         <div>
-          <h3 class="font-bold text-stone-900 text-base">Baby Breakfast Box</h3>
-          <p class="text-xs text-stone-500">Manage morning allergen and puree rotations by stage</p>
+          <h3 class="font-bold text-stone-900 text-base">Baby Lunch Box</h3>
+          <p class="text-xs text-stone-500">Manage lunch allergen and puree rotations by stage</p>
         </div>
         <div class="flex items-center gap-2">
-          <button onclick="openCreateBreakfastModal()" class="px-3 py-1.5 bg-sage-500 hover:bg-sage-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1">
-            <i class="fa-solid fa-plus"></i> New Breakfast
+          <button onclick="openCreateLunchModal()" class="px-3 py-1.5 bg-sage-500 hover:bg-sage-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1">
+            <i class="fa-solid fa-plus"></i> New Lunch
           </button>
-          <button onclick="closeModal('breakfast-box-modal')" class="text-stone-400 hover:text-stone-700 text-lg p-1">
+          <button onclick="closeModal('lunch-box-modal')" class="text-stone-400 hover:text-stone-700 text-lg p-1">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
       </div>
-      <div id="breakfast-box-list" class="p-4 overflow-y-auto divide-y divide-stone-100 space-y-2"></div>
+      <div id="lunch-box-list" class="p-4 overflow-y-auto divide-y divide-stone-100 space-y-2"></div>
     </div>
   </div>
 
@@ -706,30 +706,30 @@
     </div>
   </div>
 
-  <!-- Add / Edit Baby Breakfast Modal with Stage Selector -->
-  <div id="breakfast-form-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+  <!-- Add / Edit Baby Lunch Modal with Stage Selector -->
+  <div id="lunch-form-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-xl overflow-hidden">
       <div class="p-4 border-b border-stone-200 flex justify-between items-center">
         <div>
-          <h3 class="font-bold text-stone-900 text-base" id="breakfast-form-modal-title">Baby Breakfast</h3>
-          <p class="text-xs text-stone-500">Configure morning rotation and unlock stage</p>
+          <h3 class="font-bold text-stone-900 text-base" id="lunch-form-modal-title">Baby Lunch</h3>
+          <p class="text-xs text-stone-500">Configure lunch rotation and unlock stage</p>
         </div>
-        <button onclick="closeModal('breakfast-form-modal')" class="text-stone-400 hover:text-stone-700 text-lg p-1">
+        <button onclick="closeModal('lunch-form-modal')" class="text-stone-400 hover:text-stone-700 text-lg p-1">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
-      <form id="breakfast-form" class="p-4 overflow-y-auto space-y-3.5 text-xs">
-        <input type="hidden" id="bf-edit-id" value="" />
+      <form id="lunch-form" class="p-4 overflow-y-auto space-y-3.5 text-xs">
+        <input type="hidden" id="bl-edit-id" value="" />
         <div>
-          <label class="block font-semibold text-stone-700 mb-1">Breakfast Title *</label>
-          <input id="bf-input-title" required type="text" placeholder="e.g. Oat Cereal + Fruit Pouch + Peanut Butter" class="w-full rounded-lg border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none" />
+          <label class="block font-semibold text-stone-700 mb-1">Lunch Title *</label>
+          <input id="bl-input-title" required type="text" placeholder="e.g. Red Lentil & Sweet Potato Mash" class="w-full rounded-lg border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none" />
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block font-semibold text-stone-700 mb-1">Minimum Suitable Stage *</label>
-            <select id="bf-input-stage" class="w-full text-xs rounded-lg border border-stone-300 px-2.5 py-2 bg-white font-medium focus:ring-1 focus:ring-brand-500 focus:outline-none">
+            <select id="bl-input-stage" class="w-full text-xs rounded-lg border border-stone-300 px-2.5 py-2 bg-white font-medium focus:ring-1 focus:ring-brand-500 focus:outline-none">
               <option value="stage_1">Stage 1 (6–7m+)</option>
               <option value="stage_2">Stage 2 (8–9m+)</option>
               <option value="stage_3">Stage 3 (10–12m+)</option>
@@ -739,27 +739,27 @@
           </div>
           <div>
             <label class="block font-semibold text-stone-700 mb-1">Allergens & Nutrition Tags</label>
-            <input id="bf-input-tags" type="text" placeholder="Click chips below..." class="w-full rounded-lg border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none" />
-            <div id="breakfast-tag-chips" class="flex flex-wrap gap-1 mt-1.5"></div>
+            <input id="bl-input-tags" type="text" placeholder="Click chips below..." class="w-full rounded-lg border border-stone-300 px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none" />
+            <div id="lunch-tag-chips" class="flex flex-wrap gap-1 mt-1.5"></div>
           </div>
         </div>
 
         <div>
           <div class="flex items-center justify-between mb-1">
             <label class="font-semibold text-stone-700">Ingredients</label>
-            <button type="button" onclick="addIngredientRow('breakfast-ing-rows')" class="text-brand-600 hover:text-brand-700 font-bold text-[11px]">
+            <button type="button" onclick="addIngredientRow('lunch-ing-rows')" class="text-brand-600 hover:text-brand-700 font-bold text-[11px]">
               + Add Ingredient
             </button>
           </div>
-          <div id="breakfast-ing-rows" class="space-y-2"></div>
+          <div id="lunch-ing-rows" class="space-y-2"></div>
         </div>
 
         <div class="pt-2 flex justify-end gap-2 border-t border-stone-100">
-          <button type="button" onclick="closeModal('breakfast-form-modal')" class="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg font-semibold">
+          <button type="button" onclick="closeModal('lunch-form-modal')" class="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg font-semibold">
             Cancel
           </button>
           <button type="submit" class="px-4 py-2 bg-sage-600 hover:bg-sage-700 text-white rounded-lg font-semibold">
-            Save Breakfast
+            Save Lunch
           </button>
         </div>
       </form>
@@ -1252,81 +1252,83 @@
       }
     ];
 
-    // Default Baby Breakfast Rotations (All assigned to stage_1 as base unlocked recipes)
-    const DEFAULT_BREAKFASTS = [
+    // Default Baby Lunches (all stage_1 so every stage has one per day), built around Health Canada's iron-rich first foods
+    const DEFAULT_BABY_LUNCHES = [
       {
-        id: 'bf_1',
-        title: 'Oat Cereal + Fruit Pouch + Peanut Butter',
+        id: 'bl_1',
+        title: 'Red Lentil & Sweet Potato Mash',
         stage: 'stage_1',
-        tags: ['Peanut', 'High Iron'],
+        tags: ['Legumes', 'High Iron'],
         ingredients: [
-          { name: 'Infant oat cereal', amount: 1, unit: 'box', category: 'Baby Staples & Pouches' },
-          { name: 'Fruit pouch of choice', amount: 1, unit: 'pouch', category: 'Baby Staples & Pouches' },
-          { name: 'Smooth peanut butter', amount: null, unit: 'as needed', category: 'Pantry & Spices' }
+          { name: 'Red lentils (dry)', amount: 0.25, unit: 'cups', category: 'Pantry & Spices' },
+          { name: 'Sweet potatoes', amount: 1, unit: 'medium', category: 'Produce' },
+          { name: 'Olive oil', amount: null, unit: 'as needed', category: 'Pantry & Spices' }
         ]
       },
       {
-        id: 'bf_2',
-        title: 'Soft Scrambled Egg Yolk + Mashed Avocado',
+        id: 'bl_2',
+        title: 'Beef, Carrot & Potato Mash',
         stage: 'stage_1',
-        tags: ['Egg', 'Healthy Fat'],
+        tags: ['High Iron'],
+        ingredients: [
+          { name: 'Lean ground beef', amount: 0.25, unit: 'lbs', category: 'Meat & Poultry' },
+          { name: 'Carrots', amount: 2, unit: 'whole', category: 'Produce' },
+          { name: 'Yellow potatoes', amount: 0.25, unit: 'lbs', category: 'Produce' }
+        ]
+      },
+      {
+        id: 'bl_3',
+        title: 'Flaked Salmon & Pea Mash',
+        stage: 'stage_1',
+        tags: ['Fish', 'High Iron'],
+        ingredients: [
+          { name: 'Salmon fillet', amount: 0.25, unit: 'lbs', category: 'Meat & Poultry' },
+          { name: 'Frozen peas', amount: 0.5, unit: 'cups', category: 'Produce' }
+        ]
+      },
+      {
+        id: 'bl_4',
+        title: 'Hummus + Soft Roasted Zucchini',
+        stage: 'stage_1',
+        tags: ['Sesame', 'Legumes', 'High Iron'],
+        ingredients: [
+          { name: 'Chickpeas (canned, no salt)', amount: 1, unit: 'can', category: 'Pantry & Spices' },
+          { name: 'Tahini (sesame paste)', amount: null, unit: 'as needed', category: 'Pantry & Spices' },
+          { name: 'Zucchini', amount: 1, unit: 'medium', category: 'Produce' },
+          { name: 'Olive oil', amount: null, unit: 'as needed', category: 'Pantry & Spices' }
+        ]
+      },
+      {
+        id: 'bl_5',
+        title: 'Egg & Avocado Mash + Toast Strips',
+        stage: 'stage_1',
+        tags: ['Egg', 'Wheat', 'Healthy Fat'],
         ingredients: [
           { name: 'Eggs', amount: 1, unit: 'whole', category: 'Dairy & Refrigerated' },
-          { name: 'Avocados', amount: 0.5, unit: 'whole', category: 'Produce' }
+          { name: 'Avocados', amount: 0.5, unit: 'whole', category: 'Produce' },
+          { name: 'Whole wheat bread', amount: 1, unit: 'pack', category: 'Bakery & Bread' }
         ]
       },
       {
-        id: 'bf_3',
-        title: 'Greek Yogurt + Fruit Pouch + Chia Seeds',
+        id: 'bl_6',
+        title: 'Soft Tofu, Rice & Broccoli Mash',
         stage: 'stage_1',
-        tags: ['Dairy', 'Healthy Fat'],
+        tags: ['Soy', 'High Iron'],
         ingredients: [
-          { name: 'Plain whole-milk Greek yogurt', amount: 1, unit: 'tub', category: 'Dairy & Refrigerated' },
-          { name: 'Fruit pouch of choice', amount: 1, unit: 'pouch', category: 'Baby Staples & Pouches' },
-          { name: 'Chia seeds', amount: null, unit: 'as needed', category: 'Pantry & Spices' }
+          { name: 'Soft tofu', amount: 1, unit: 'pack', category: 'Dairy & Refrigerated' },
+          { name: 'White or jasmine rice', amount: 0.25, unit: 'cups', category: 'Pantry & Spices' },
+          { name: 'Broccoli', amount: 0.5, unit: 'heads', category: 'Produce' }
         ]
       },
       {
-        id: 'bf_4',
-        title: 'Mashed Banana + Almond Butter + Oat Cereal',
+        id: 'bl_7',
+        title: 'Ricotta & Spinach Pasta Stars',
         stage: 'stage_1',
-        tags: ['Tree Nut', 'High Iron'],
+        tags: ['Dairy', 'Wheat'],
         ingredients: [
-          { name: 'Bananas', amount: 1, unit: 'whole', category: 'Produce' },
-          { name: 'Almond butter', amount: null, unit: 'as needed', category: 'Pantry & Spices' },
-          { name: 'Infant oat cereal', amount: 1, unit: 'box', category: 'Baby Staples & Pouches' }
-        ]
-      },
-      {
-        id: 'bf_5',
-        title: 'Whole Scrambled Egg + Fruit Pouch',
-        stage: 'stage_1',
-        tags: ['Egg', 'Vitamin C'],
-        ingredients: [
-          { name: 'Eggs', amount: 1, unit: 'whole', category: 'Dairy & Refrigerated' },
-          { name: 'Fruit pouch of choice', amount: 1, unit: 'pouch', category: 'Baby Staples & Pouches' }
-        ]
-      },
-      {
-        id: 'bf_6',
-        title: 'Greek Yogurt + Fruit Pouch + Hemp Hearts',
-        stage: 'stage_1',
-        tags: ['Dairy', 'Healthy Fat'],
-        ingredients: [
-          { name: 'Plain whole-milk Greek yogurt', amount: 1, unit: 'tub', category: 'Dairy & Refrigerated' },
-          { name: 'Fruit pouch of choice', amount: 1, unit: 'pouch', category: 'Baby Staples & Pouches' },
-          { name: 'Hemp hearts', amount: null, unit: 'as needed', category: 'Pantry & Spices' }
-        ]
-      },
-      {
-        id: 'bf_7',
-        title: 'Warm Prune Oatmeal + Tahini Swirl (Fiber & Iron)',
-        stage: 'stage_1',
-        tags: ['Sesame', 'High Iron'],
-        ingredients: [
-          { name: 'Infant oat cereal', amount: 1, unit: 'box', category: 'Baby Staples & Pouches' },
-          { name: 'Prune puree pouch', amount: 1, unit: 'pouch', category: 'Baby Staples & Pouches' },
-          { name: 'Tahini (sesame paste)', amount: null, unit: 'as needed', category: 'Pantry & Spices' }
+          { name: 'Small pasta stars', amount: 0.25, unit: 'cups', category: 'Pantry & Spices' },
+          { name: 'Ricotta cheese', amount: 1, unit: 'tub', category: 'Dairy & Refrigerated' },
+          { name: 'Baby spinach', amount: 1, unit: 'tub', category: 'Produce' }
         ]
       }
     ];
@@ -1334,13 +1336,13 @@
     const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
     const DEFAULT_WEEK_PLAN = {
-      Monday: { dinner: 'rec_1', breakfast: 'bf_1' },
-      Tuesday: { dinner: 'rec_2', breakfast: 'bf_2' },
-      Wednesday: { dinner: 'rec_4', breakfast: 'bf_3' },
-      Thursday: { dinner: 'rec_8', breakfast: 'bf_4' },
-      Friday: { dinner: 'rec_10', breakfast: 'bf_5' },
-      Saturday: { dinner: 'rec_14', breakfast: 'bf_6' },
-      Sunday: { dinner: 'rec_16', breakfast: 'bf_7' }
+      Monday: { dinner: 'rec_1', babyLunch: 'bl_1' },
+      Tuesday: { dinner: 'rec_2', babyLunch: 'bl_2' },
+      Wednesday: { dinner: 'rec_4', babyLunch: 'bl_3' },
+      Thursday: { dinner: 'rec_8', babyLunch: 'bl_4' },
+      Friday: { dinner: 'rec_10', babyLunch: 'bl_5' },
+      Saturday: { dinner: 'rec_14', babyLunch: 'bl_6' },
+      Sunday: { dinner: 'rec_16', babyLunch: 'bl_7' }
     };
 
     // Escape user-entered text before putting it in innerHTML
@@ -1402,7 +1404,9 @@
 
     // State Initialization under storage key (_v10, weeks and checks _v11)
     let dinners = readLocal('family_dinners_v10', null) || DEFAULT_DINNERS;
-    let breakfasts = readLocal('family_breakfasts_v10', null) || (BABY_MODE ? DEFAULT_BREAKFASTS : []);
+    // Baby lunches replaced the per-day baby breakfast. The old `breakfasts` key and each day's
+    // `breakfast` field stay on the server untouched, but nothing reads them any more.
+    let babyLunches = readLocal('family_baby_lunches_v10', null) || (BABY_MODE ? DEFAULT_BABY_LUNCHES : []);
 
     // Older versions kept one undated week; it becomes the current week
     let weeks = readLocal('family_weeks_v11', null) || { [getWeekKey()]: readLocal('family_weekly_plan_v10', null) || DEFAULT_WEEK_PLAN };
@@ -1426,18 +1430,18 @@
     let activeDaySelecting = null;
     let wakeLockSentinel = null;
 
-    // A blank week gets dinners unset and breakfasts rotated through what the current stage allows
+    // A blank week gets dinners unset and baby lunches rotated through what the current stage allows
     function createWeek() {
-      const available = getAvailableBreakfasts();
+      const available = getAvailableLunches();
       return Object.fromEntries(DAYS_OF_WEEK.map((day, i) => [
         day,
-        { dinner: null, breakfast: available.length ? available[i % available.length].id : null }
+        { dinner: null, babyLunch: available.length ? available[i % available.length].id : null }
       ]));
     }
 
     // Courses mode only: every recipe lives in `dinners` with a course, and a day can add an optional
     // breakfast, lunch, dessert and any number of snacks next to its dinner. The day's `breakfast` field
-    // belongs to the baby breakfast, so this breakfast is stored as `breakfastMeal`.
+    // held the old baby breakfast, so this breakfast is stored as `breakfastMeal`.
     const COURSE_LABELS = { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', dessert: 'Dessert', snack: 'Snack' };
     const COURSE_PLURALS = { breakfast: 'Breakfasts', lunch: 'Lunches', dinner: 'Dinners', dessert: 'Desserts', snack: 'Snacks' };
     const EXTRA_SLOTS = [
@@ -1472,7 +1476,7 @@
 
     function writeLocalCache() {
       localStorage.setItem('family_dinners_v10', JSON.stringify(dinners));
-      localStorage.setItem('family_breakfasts_v10', JSON.stringify(breakfasts));
+      localStorage.setItem('family_baby_lunches_v10', JSON.stringify(babyLunches));
       localStorage.setItem('family_weeks_v11', JSON.stringify(weeks));
       localStorage.setItem('family_grocery_checks_v11', JSON.stringify(groceryChecks));
       localStorage.setItem('family_stocked_pantry_v10', JSON.stringify(stockedPantryItems));
@@ -1524,18 +1528,18 @@
       return BABY_STAGES[selectedStageKey] || BABY_STAGES.stage_1;
     }
 
-    // Check if a breakfast is unlocked for the current baby stage
-    function isBreakfastUnlocked(bf, currentStageId) {
-      const bfStage = bf.stage || 'stage_1';
-      const requiredRank = STAGE_ORDER[bfStage] || 1;
+    // Check if a lunch is unlocked for the current baby stage
+    function isLunchUnlocked(lunch, currentStageId) {
+      const lunchStage = lunch.stage || 'stage_1';
+      const requiredRank = STAGE_ORDER[lunchStage] || 1;
       const currentRank = STAGE_ORDER[currentStageId] || 1;
       return currentRank >= requiredRank;
     }
 
-    // Get all breakfasts unlocked for the current stage
-    function getAvailableBreakfasts() {
+    // Get all lunches unlocked for the current stage
+    function getAvailableLunches() {
       if (!BABY_MODE) return [];
-      return breakfasts.filter(b => isBreakfastUnlocked(b, selectedStageKey));
+      return babyLunches.filter(b => isLunchUnlocked(b, selectedStageKey));
     }
 
     function openBabyStageModal() {
@@ -1554,7 +1558,7 @@
         document.getElementById('stage-override-select').value = selectedStageKey;
       }
       updateModalAgeFeedback();
-      ensureBreakfastsMatchStage();
+      ensureLunchesMatchStage();
       saveState();
     }
 
@@ -1563,22 +1567,22 @@
       // A hand-picked stage sticks until the birthdate is changed again
       stageOverride = true;
       updateModalAgeFeedback();
-      ensureBreakfastsMatchStage();
+      ensureLunchesMatchStage();
       saveState();
     }
 
-    // Ensure currently assigned weekly breakfasts are valid for the active stage
-    function ensureBreakfastsMatchStage() {
-      const unlocked = getAvailableBreakfasts();
+    // Ensure currently assigned weekly lunches are valid for the active stage. Days without one
+    // (including weeks planned before lunches replaced breakfasts) get the day's place in the rotation.
+    function ensureLunchesMatchStage() {
+      const unlocked = getAvailableLunches();
       if (unlocked.length === 0) return;
-      const fallbackId = unlocked[0].id;
 
-      DAYS_OF_WEEK.forEach(day => {
-        const assignedId = currentWeeklyPlan[day]?.breakfast;
-        const currentBf = breakfasts.find(b => b.id === assignedId);
-        if (!currentBf || !isBreakfastUnlocked(currentBf, selectedStageKey)) {
+      DAYS_OF_WEEK.forEach((day, i) => {
+        const assignedId = currentWeeklyPlan[day]?.babyLunch;
+        const current = babyLunches.find(b => b.id === assignedId);
+        if (!current || !isLunchUnlocked(current, selectedStageKey)) {
           if (!currentWeeklyPlan[day]) currentWeeklyPlan[day] = {};
-          currentWeeklyPlan[day].breakfast = fallbackId;
+          currentWeeklyPlan[day].babyLunch = unlocked[i % unlocked.length].id;
         }
       });
     }
@@ -1655,7 +1659,7 @@
       const stats = {};
       const tally = (counts, value) => { counts.set(value, (counts.get(value) || 0) + 1); };
       const top = counts => [...counts.entries()].reduce((best, entry) => (entry[1] > best[1] ? entry : best), [null, 0])[0];
-      [...dinners, ...(BABY_MODE ? breakfasts : [])].forEach(recipe => {
+      [...dinners, ...(BABY_MODE ? babyLunches : [])].forEach(recipe => {
         if (excludeRecipeId && recipe.id === excludeRecipeId) return;
         const seen = new Set();
         (recipe.ingredients || []).forEach(i => {
@@ -1731,7 +1735,7 @@
 
     function updateUI() {
       document.getElementById('dinner-count-badge').innerText = dinners.length;
-      document.getElementById('breakfast-count-badge').innerText = breakfasts.length;
+      document.getElementById('lunch-count-badge').innerText = babyLunches.length;
       renderStageUI();
       refreshAutocompleteDatalist();
       renderWeekHeader();
@@ -1740,7 +1744,7 @@
       renderGroceryScopeButtons();
       renderGroceryList();
       renderTagChips('dinner-tag-chips', 'din-input-tags');
-      renderTagChips('breakfast-tag-chips', 'bf-input-tags');
+      renderTagChips('lunch-tag-chips', 'bl-input-tags');
     }
 
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
@@ -1759,7 +1763,7 @@
         currentTags.push(tag);
       }
       input.value = currentTags.join(', ');
-      renderTagChips(inputId === 'din-input-tags' ? 'dinner-tag-chips' : 'breakfast-tag-chips', inputId);
+      renderTagChips(inputId === 'din-input-tags' ? 'dinner-tag-chips' : 'lunch-tag-chips', inputId);
     }
 
     function renderTagChips(containerId, inputId) {
@@ -1828,23 +1832,24 @@
       return detected;
     }
 
-    // Render Schedule Cards with Stage-Filtered Breakfast Options
+    // Render Schedule Cards with Stage-Filtered Lunch Options
     function renderPlanner() {
       const container = document.getElementById('days-container');
       container.innerHTML = '';
       const todayIdx = getTodayDayIndex();
       const currentStage = getCurrentStage();
-      const availableBreakfasts = getAvailableBreakfasts();
+      const availableLunches = getAvailableLunches();
 
       DAYS_OF_WEEK.forEach((day, index) => {
-        const assignment = currentWeeklyPlan[day] || { dinner: null, breakfast: null };
+        const assignment = currentWeeklyPlan[day] || { dinner: null, babyLunch: null };
         const dinner = dinners.find(r => r.id === assignment.dinner);
-        let breakfast = breakfasts.find(b => b.id === assignment.breakfast);
+        let lunch = babyLunches.find(b => b.id === assignment.babyLunch);
 
-        // If currently assigned breakfast is locked for current stage, fallback to first available
-        if (BABY_MODE && breakfast && !isBreakfastUnlocked(breakfast, selectedStageKey)) {
-          breakfast = availableBreakfasts[0] || breakfast;
-          currentWeeklyPlan[day].breakfast = breakfast.id;
+        // If the day has no lunch or it's locked for the current stage, fall back to the rotation
+        if (BABY_MODE && availableLunches.length && (!lunch || !isLunchUnlocked(lunch, selectedStageKey))) {
+          lunch = availableLunches[index % availableLunches.length];
+          if (!currentWeeklyPlan[day]) currentWeeklyPlan[day] = {};
+          currentWeeklyPlan[day].babyLunch = lunch.id;
         }
 
         const offset = weekOffset(viewedWeekKey);
@@ -1884,25 +1889,25 @@
           </div>
 
           <div class="p-4 grid grid-cols-1 md:grid-cols-12 gap-4">
-            <!-- Baby Breakfast Strip (Stage-Filtered Options) -->
+            <!-- Baby Lunch Strip (Stage-Filtered Options) -->
             ${BABY_MODE ? `<div class="md:col-span-4 ${isPast ? 'bg-stone-300/40 border-stone-300' : 'bg-sage-50/70 border-sage-100/80'} rounded-lg p-3 border flex flex-col justify-between gap-2.5">
               <div class="space-y-1.5">
                 <div class="flex items-center justify-between">
                   <span class="text-[10px] uppercase font-bold tracking-wider ${isPast ? 'text-stone-500' : 'text-sage-700'} flex items-center gap-1">
-                    <i class="fa-solid fa-sun ${isPast ? 'text-stone-400' : 'text-amber-500'}"></i> Baby Breakfast
+                    <i class="fa-solid fa-bowl-food ${isPast ? 'text-stone-400' : 'text-amber-500'}"></i> Baby Lunch
                   </span>
                   <span class="text-[9px] font-bold px-1.5 py-px rounded bg-white text-sage-700 border border-sage-200">
                     ${currentStage.shortLabel}
                   </span>
                 </div>
                 
-                <select onchange="changeBreakfast('${day}', this.value)" class="w-full text-xs bg-white border ${isPast ? 'border-stone-300 text-stone-500' : 'border-sage-200 text-stone-800'} rounded-md px-2 py-1.5 font-medium focus:ring-1 focus:ring-sage-500 focus:outline-none shadow-xs truncate cursor-pointer">
-                  ${availableBreakfasts.map(b => `<option value="${esc(b.id)}" ${b.id === (breakfast ? breakfast.id : '') ? 'selected' : ''}>${esc(b.title)}</option>`).join('')}
+                <select onchange="changeLunch('${day}', this.value)" class="w-full text-xs bg-white border ${isPast ? 'border-stone-300 text-stone-500' : 'border-sage-200 text-stone-800'} rounded-md px-2 py-1.5 font-medium focus:ring-1 focus:ring-sage-500 focus:outline-none shadow-xs truncate cursor-pointer">
+                  ${availableLunches.map(b => `<option value="${esc(b.id)}" ${b.id === (lunch ? lunch.id : '') ? 'selected' : ''}>${esc(b.title)}</option>`).join('')}
                 </select>
               </div>
 
               <div class="flex flex-wrap gap-1 pt-1 border-t ${isPast ? 'border-stone-300' : 'border-sage-100/60'}">
-                ${breakfast && breakfast.tags ? breakfast.tags.map(t => `<span class="px-1.5 py-0.5 bg-white ${isPast ? 'text-stone-500 border-stone-200' : 'text-sage-700 border-sage-200/60'} rounded text-[9px] font-bold border shadow-2xs">${esc(t)}</span>`).join('') : ''}
+                ${lunch && lunch.tags ? lunch.tags.map(t => `<span class="px-1.5 py-0.5 bg-white ${isPast ? 'text-stone-500 border-stone-200' : 'text-sage-700 border-sage-200/60'} rounded text-[9px] font-bold border shadow-2xs">${esc(t)}</span>`).join('') : ''}
               </div>
             </div>` : ''}
 
@@ -2017,7 +2022,7 @@
         const item = currentWeeklyPlan[day];
         if (item) {
           const dinner = dinners.find(r => r.id === item.dinner);
-          const breakfast = breakfasts.find(b => b.id === item.breakfast);
+          const lunch = babyLunches.find(b => b.id === item.babyLunch);
 
           if (dinner) {
             if (dinner.tags) dinner.tags.forEach(t => activeTags.add(t.trim()));
@@ -2025,9 +2030,9 @@
             const detected = detectNutritionFromIngredients(dinner.ingredients);
             detected.forEach(tag => activeTags.add(tag));
           }
-          if (breakfast) {
-            if (breakfast.tags) breakfast.tags.forEach(t => activeTags.add(t.trim()));
-            const detected = detectNutritionFromIngredients(breakfast.ingredients);
+          if (lunch) {
+            if (lunch.tags) lunch.tags.forEach(t => activeTags.add(t.trim()));
+            const detected = detectNutritionFromIngredients(lunch.ingredients);
             detected.forEach(tag => activeTags.add(tag));
           }
         }
@@ -2183,7 +2188,7 @@
         const meals = [
           dinners.find(r => r.id === plan.dinner),
           ...extraAssignments(plan).map(([, id]) => dinners.find(r => r.id === id)),
-          BABY_MODE && breakfasts.find(b => b.id === plan.breakfast)
+          BABY_MODE && babyLunches.find(b => b.id === plan.babyLunch)
         ];
         meals.forEach(meal => (meal?.ingredients || []).forEach(ing => {
           const name = (ing.name || '').trim();
@@ -2473,9 +2478,9 @@
       }
     }
 
-    function changeBreakfast(day, breakfastId) {
+    function changeLunch(day, lunchId) {
       if (!currentWeeklyPlan[day]) currentWeeklyPlan[day] = {};
-      currentWeeklyPlan[day].breakfast = breakfastId;
+      currentWeeklyPlan[day].babyLunch = lunchId;
       saveState();
     }
 
@@ -2623,17 +2628,17 @@
       }
     }
 
-    // Recipe Box Management (Breakfasts with Stage Badges)
-    document.getElementById('open-breakfast-box-btn').addEventListener('click', () => {
-      const list = document.getElementById('breakfast-box-list');
+    // Recipe Box Management (Baby Lunches with Stage Badges)
+    document.getElementById('open-lunch-box-btn').addEventListener('click', () => {
+      const list = document.getElementById('lunch-box-list');
       list.innerHTML = '';
-      if (breakfasts.length === 0) {
-        list.innerHTML = `<p class="text-xs text-stone-400 text-center py-6">No breakfasts in your box.</p>`;
+      if (babyLunches.length === 0) {
+        list.innerHTML = `<p class="text-xs text-stone-400 text-center py-6">No lunches in your box.</p>`;
       } else {
-        breakfasts.forEach(b => {
-          const bfStage = b.stage || 'stage_1';
-          const stageDef = BABY_STAGES[bfStage] || BABY_STAGES.stage_1;
-          const isUnlocked = isBreakfastUnlocked(b, selectedStageKey);
+        babyLunches.forEach(b => {
+          const lunchStage = b.stage || 'stage_1';
+          const stageDef = BABY_STAGES[lunchStage] || BABY_STAGES.stage_1;
+          const isUnlocked = isLunchUnlocked(b, selectedStageKey);
 
           const item = document.createElement('div');
           item.className = 'py-3 flex items-start justify-between gap-4';
@@ -2651,10 +2656,10 @@
               <p class="text-[11px] text-stone-500">${b.tags ? esc(b.tags.join(', ')) : ''}</p>
             </div>
             <div class="flex items-center gap-2">
-              <button onclick="editBreakfast(${jsArg(b.id)})" class="text-stone-400 hover:text-sage-600 text-xs p-1 transition" title="Edit Breakfast">
+              <button onclick="editLunch(${jsArg(b.id)})" class="text-stone-400 hover:text-sage-600 text-xs p-1 transition" title="Edit Lunch">
                 <i class="fa-solid fa-pen"></i>
               </button>
-              <button onclick="deleteBreakfast(${jsArg(b.id)})" class="text-stone-400 hover:text-rose-600 text-xs p-1 transition" title="Delete Breakfast">
+              <button onclick="deleteLunch(${jsArg(b.id)})" class="text-stone-400 hover:text-rose-600 text-xs p-1 transition" title="Delete Lunch">
                 <i class="fa-solid fa-trash-can"></i>
               </button>
             </div>
@@ -2662,43 +2667,43 @@
           list.appendChild(item);
         });
       }
-      openModal('breakfast-box-modal');
+      openModal('lunch-box-modal');
     });
 
-    function editBreakfast(id) {
-      const breakfast = breakfasts.find(b => b.id === id);
-      if (!breakfast) return;
-      closeModal('breakfast-box-modal');
+    function editLunch(id) {
+      const lunch = babyLunches.find(b => b.id === id);
+      if (!lunch) return;
+      closeModal('lunch-box-modal');
 
-      document.getElementById('breakfast-form-modal-title').innerText = 'Edit Baby Breakfast';
-      document.getElementById('bf-edit-id').value = breakfast.id;
-      document.getElementById('bf-input-title').value = breakfast.title || '';
-      document.getElementById('bf-input-stage').value = breakfast.stage || 'stage_1';
-      document.getElementById('bf-input-tags').value = (breakfast.tags || []).join(', ');
+      document.getElementById('lunch-form-modal-title').innerText = 'Edit Baby Lunch';
+      document.getElementById('bl-edit-id').value = lunch.id;
+      document.getElementById('bl-input-title').value = lunch.title || '';
+      document.getElementById('bl-input-stage').value = lunch.stage || 'stage_1';
+      document.getElementById('bl-input-tags').value = (lunch.tags || []).join(', ');
 
-      renderTagChips('breakfast-tag-chips', 'bf-input-tags');
+      renderTagChips('lunch-tag-chips', 'bl-input-tags');
 
-      const container = document.getElementById('breakfast-ing-rows');
+      const container = document.getElementById('lunch-ing-rows');
       container.innerHTML = '';
-      if (breakfast.ingredients && breakfast.ingredients.length > 0) {
-        breakfast.ingredients.forEach(i => {
-          addIngredientRow('breakfast-ing-rows', i.name, i.amount || '', i.unit || 'pouch', i.category || 'Baby Staples & Pouches');
+      if (lunch.ingredients && lunch.ingredients.length > 0) {
+        lunch.ingredients.forEach(i => {
+          addIngredientRow('lunch-ing-rows', i.name, i.amount || '', i.unit || 'pouch', i.category || 'Baby Staples & Pouches');
         });
       } else {
-        addIngredientRow('breakfast-ing-rows', 'Infant oat cereal', 1, 'box', 'Baby Staples & Pouches');
+        addIngredientRow('lunch-ing-rows', '', 1, 'whole', 'Produce');
       }
 
-      openModal('breakfast-form-modal');
+      openModal('lunch-form-modal');
     }
 
-    function deleteBreakfast(id) {
-      const breakfast = breakfasts.find(b => b.id === id);
-      if (confirm("Delete this baby breakfast recipe?")) {
-        pendingSnapshot = { label: `Before deleting "${breakfast?.title || 'a breakfast'}"`, week: viewedWeekKey };
-        breakfasts = breakfasts.filter(b => b.id !== id);
-        ensureBreakfastsMatchStage();
+    function deleteLunch(id) {
+      const lunch = babyLunches.find(b => b.id === id);
+      if (confirm("Delete this baby lunch recipe?")) {
+        pendingSnapshot = { label: `Before deleting "${lunch?.title || 'a lunch'}"`, week: viewedWeekKey };
+        babyLunches = babyLunches.filter(b => b.id !== id);
+        ensureLunchesMatchStage();
         saveState();
-        document.getElementById('open-breakfast-box-btn').click();
+        document.getElementById('open-lunch-box-btn').click();
       }
     }
 
@@ -2708,7 +2713,7 @@
     }
 
     function editingRecipeId(containerId) {
-      return document.getElementById(containerId === 'dinner-ing-rows' ? 'din-edit-id' : 'bf-edit-id').value || null;
+      return document.getElementById(containerId === 'dinner-ing-rows' ? 'din-edit-id' : 'bl-edit-id').value || null;
     }
 
     // Dynamic Ingredient Row
@@ -2847,30 +2852,29 @@
       document.getElementById('open-dinner-box-btn').click();
     });
 
-    function openCreateBreakfastModal() {
-      document.getElementById('breakfast-form-modal-title').innerText = 'Add New Baby Breakfast';
-      document.getElementById('breakfast-form').reset();
-      document.getElementById('bf-edit-id').value = '';
-      document.getElementById('bf-input-stage').value = selectedStageKey || 'stage_1';
-      document.getElementById('breakfast-ing-rows').innerHTML = '';
-      renderTagChips('breakfast-tag-chips', 'bf-input-tags');
-      addIngredientRow('breakfast-ing-rows', 'Infant oat cereal', 1, 'box', 'Baby Staples & Pouches');
-      addIngredientRow('breakfast-ing-rows', 'Fruit pouch of choice', 1, 'pouch', 'Baby Staples & Pouches');
-      closeModal('breakfast-box-modal');
-      openModal('breakfast-form-modal');
+    function openCreateLunchModal() {
+      document.getElementById('lunch-form-modal-title').innerText = 'Add New Baby Lunch';
+      document.getElementById('lunch-form').reset();
+      document.getElementById('bl-edit-id').value = '';
+      document.getElementById('bl-input-stage').value = selectedStageKey || 'stage_1';
+      document.getElementById('lunch-ing-rows').innerHTML = '';
+      renderTagChips('lunch-tag-chips', 'bl-input-tags');
+      addIngredientRow('lunch-ing-rows', '', 1, 'whole', 'Produce');
+      closeModal('lunch-box-modal');
+      openModal('lunch-form-modal');
     }
 
-    document.getElementById('breakfast-form').addEventListener('submit', (e) => {
+    document.getElementById('lunch-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      const editId = document.getElementById('bf-edit-id').value;
-      const title = document.getElementById('bf-input-title').value.trim();
-      const stage = document.getElementById('bf-input-stage').value;
-      const tags = document.getElementById('bf-input-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+      const editId = document.getElementById('bl-edit-id').value;
+      const title = document.getElementById('bl-input-title').value.trim();
+      const stage = document.getElementById('bl-input-stage').value;
+      const tags = document.getElementById('bl-input-tags').value.split(',').map(t => t.trim()).filter(Boolean);
 
       const ingredients = [];
-      const breakfastStats = getIngredientStats(editId || null);
-      document.querySelectorAll('#breakfast-ing-rows .ing-row').forEach(row => {
-        const name = canonicalIngredientName(row.querySelector('.ing-name').value.trim(), breakfastStats);
+      const lunchStats = getIngredientStats(editId || null);
+      document.querySelectorAll('#lunch-ing-rows .ing-row').forEach(row => {
+        const name = canonicalIngredientName(row.querySelector('.ing-name').value.trim(), lunchStats);
         const rawAmt = row.querySelector('.ing-amount').value;
         const amount = rawAmt ? parseFloat(rawAmt) : null;
         const unit = row.querySelector('.ing-unit').value || 'as needed';
@@ -2879,10 +2883,10 @@
       });
 
       if (editId) {
-        const idx = breakfasts.findIndex(b => b.id === editId);
+        const idx = babyLunches.findIndex(b => b.id === editId);
         if (idx !== -1) {
-          breakfasts[idx] = {
-            ...breakfasts[idx],
+          babyLunches[idx] = {
+            ...babyLunches[idx],
             title,
             stage,
             tags,
@@ -2890,8 +2894,8 @@
           };
         }
       } else {
-        breakfasts.push({
-          id: 'bf_' + Date.now(),
+        babyLunches.push({
+          id: 'bl_' + Date.now(),
           title,
           stage,
           tags,
@@ -2899,10 +2903,10 @@
         });
       }
 
-      ensureBreakfastsMatchStage();
+      ensureLunchesMatchStage();
       saveState();
-      closeModal('breakfast-form-modal');
-      document.getElementById('open-breakfast-box-btn').click();
+      closeModal('lunch-form-modal');
+      document.getElementById('open-lunch-box-btn').click();
     });
 
     // ---------- Toasts & undo ----------
@@ -2969,7 +2973,7 @@
         version: 11,
         exportDate: new Date().toISOString(),
         dinners,
-        breakfasts,
+        babyLunches,
         weeks,
         groceryChecks,
         stockedPantryItems,
@@ -3010,10 +3014,10 @@
           showToast('That file isn\'t a valid backup.');
           return;
         }
-        const importedBreakfasts = Array.isArray(parsed.breakfasts) ? parsed.breakfasts : breakfasts;
-        runUndoable('Before restoring a backup file', `Backup restored: ${importedDinners.length} dinners and ${importedBreakfasts.length} breakfasts.`, () => {
+        const importedLunches = Array.isArray(parsed.babyLunches) ? parsed.babyLunches : babyLunches;
+        runUndoable('Before restoring a backup file', `Backup restored: ${importedDinners.length} dinners and ${importedLunches.length} lunches.`, () => {
           dinners = importedDinners;
-          breakfasts = importedBreakfasts.map(b => ({ ...b, stage: b.stage || 'stage_1' }));
+          babyLunches = importedLunches.map(b => ({ ...b, stage: b.stage || 'stage_1' }));
           if (parsed.weeks && typeof parsed.weeks === 'object') {
             weeks = parsed.weeks;
             groceryChecks = parsed.groceryChecks || {};
@@ -3033,7 +3037,7 @@
           const months = calculateBabyAgeMonths(babyBirthdate);
           if (months !== null && !stageOverride) selectedStageKey = determineStageFromAge(months);
           currentWeeklyPlan = weeks[viewedWeekKey] || createWeek();
-          ensureBreakfastsMatchStage();
+          ensureLunchesMatchStage();
         });
         closeModal('history-modal');
       };
@@ -3041,21 +3045,21 @@
       e.target.value = '';
     });
 
-    // Autofill (Selects ONLY from currently unlocked breakfasts)
+    // Autofill (Selects ONLY from currently unlocked lunches)
     document.getElementById('autofill-btn').addEventListener('click', () => {
       const dinnerRecipes = recipesForCourse('dinner');
       if (dinnerRecipes.length === 0) return showToast('Add some dinners first.');
-      const availableBfs = getAvailableBreakfasts();
-      if (BABY_MODE && availableBfs.length === 0) return showToast('No breakfasts are unlocked for the current stage.');
+      const availableLunches = getAvailableLunches();
+      if (BABY_MODE && availableLunches.length === 0) return showToast('No lunches are unlocked for the current stage.');
 
       runUndoable('Before Autofill', `Autofilled ${weekPhrase()}.`, () => {
         const shuffledDinners = shuffled(dinnerRecipes);
-        const shuffledBfs = shuffled(availableBfs);
+        const shuffledLunches = shuffled(availableLunches);
         DAYS_OF_WEEK.forEach((day, idx) => {
           currentWeeklyPlan[day] = {
             ...currentWeeklyPlan[day],
             dinner: shuffledDinners[idx % shuffledDinners.length].id,
-            breakfast: shuffledBfs.length ? shuffledBfs[idx % shuffledBfs.length].id : null
+            babyLunch: shuffledLunches.length ? shuffledLunches[idx % shuffledLunches.length].id : null
           };
         });
         groceryChecks[viewedWeekKey] = [];
@@ -3064,10 +3068,7 @@
 
     document.getElementById('clear-plan-btn').addEventListener('click', () => {
       runUndoable('Before Reset Week', `Cleared ${weekPhrase()}.`, () => {
-        const defaultBfId = getAvailableBreakfasts()[0]?.id || null;
-        DAYS_OF_WEEK.forEach(day => {
-          currentWeeklyPlan[day] = { dinner: null, breakfast: defaultBfId };
-        });
+        currentWeeklyPlan = createWeek();
         groceryChecks[viewedWeekKey] = [];
       });
     });
@@ -3190,7 +3191,7 @@
       runUndoable(`Before copying ${weekPhrase(prevKey)}`, `Copied the menu from ${weekPhrase(prevKey)}.`, () => {
         currentWeeklyPlan = JSON.parse(JSON.stringify(prev));
         groceryChecks[viewedWeekKey] = [];
-        ensureBreakfastsMatchStage();
+        ensureLunchesMatchStage();
       });
     }
 
@@ -3318,14 +3319,14 @@
             const recipe = (data.dinners || []).find(r => r.id === id);
             if (recipe) dinners.push(recipe);
           });
-          if (slot.breakfast && !breakfasts.some(b => b.id === slot.breakfast)) {
-            const recipe = (data.breakfasts || []).find(b => b.id === slot.breakfast);
-            if (recipe) breakfasts.push(recipe);
+          if (slot.babyLunch && !babyLunches.some(b => b.id === slot.babyLunch)) {
+            const recipe = (data.babyLunches || []).find(b => b.id === slot.babyLunch);
+            if (recipe) babyLunches.push(recipe);
           }
         });
         currentWeeklyPlan = JSON.parse(JSON.stringify(plan));
         groceryChecks[viewedWeekKey] = [];
-        ensureBreakfastsMatchStage();
+        ensureLunchesMatchStage();
       });
       closeModal('history-modal');
     }
@@ -3486,7 +3487,7 @@
     let pushEpoch = 0;
 
     function getSyncedState() {
-      const state = { dinners, breakfasts, stockedPantryItems, clearedAllergens, customGroceries, recentExtras, babyBirthdate, selectedStageKey, stageOverride };
+      const state = { dinners, babyLunches, stockedPantryItems, clearedAllergens, customGroceries, recentExtras, babyBirthdate, selectedStageKey, stageOverride };
       Object.keys(weeks).forEach(k => { state['week:' + k] = weeks[k]; });
       Object.keys(groceryChecks).forEach(k => { state['checks:' + k] = groceryChecks[k]; });
       return state;
@@ -3507,7 +3508,7 @@
       if (value === undefined) return;
       switch (key) {
         case 'dinners': dinners = value; break;
-        case 'breakfasts': breakfasts = value; break;
+        case 'babyLunches': babyLunches = value; break;
         case 'stockedPantryItems': stockedPantryItems = value; break;
         case 'clearedAllergens': clearedAllergens = value; break;
         case 'customGroceries': customGroceries = value; break;
@@ -3638,7 +3639,7 @@
 
     async function pullState() {
       if (!serverMode || document.hidden || pushing) return;
-      // Re-rendering would close a breakfast dropdown someone has open
+      // Re-rendering would close a lunch dropdown someone has open
       const active = document.activeElement;
       if (active && active.tagName === 'SELECT' && active.closest('#days-container')) return;
       const epoch = pushEpoch;
@@ -3690,6 +3691,8 @@
         lastSynced = meta.lastSynced;
         serverVersion = meta.version || 0;
         lastBootAt = meta.bootServedAt || 0;
+        // A device that synced before baby lunches existed only holds the defaults, so the server's lunches win
+        if (!('babyLunches' in lastSynced) && localStorage.getItem('family_baby_lunches_v10') === null) lastSynced.babyLunches = JSON.stringify(babyLunches);
       } else {
         // First visit on this device: the server copy wins over the built-in defaults
         Object.entries(getSyncedState()).forEach(([k, v]) => { lastSynced[k] = JSON.stringify(v); });
@@ -3735,7 +3738,7 @@
     }
 
     // ---------- Modals & printing ----------
-    const FORM_MODALS = ['dinner-form-modal', 'breakfast-form-modal'];
+    const FORM_MODALS = ['dinner-form-modal', 'lunch-form-modal'];
 
     function closeAnyModal(modal) {
       if (modal.id === 'cook-mode-modal') closeCookMode();
@@ -3767,7 +3770,7 @@
     if (computedInitialMonths !== null && !stageOverride) {
       selectedStageKey = determineStageFromAge(computedInitialMonths);
     }
-    ensureBreakfastsMatchStage();
+    ensureLunchesMatchStage();
     document.querySelector('meta[name="theme-color"]').setAttribute('content', loadTheme().brand);
 
     // Initial render

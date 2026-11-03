@@ -1,7 +1,7 @@
 {
   "name": "Family Meal & Baby Nutrition Planner",
   "short_name": "Meal Planner",
-  "description": "Weekly family dinners, baby breakfasts, allergen tracking and a shared grocery list.",
+  "description": "Weekly family dinners, baby lunches, allergen tracking and a shared grocery list.",
   "start_url": "../",
   "scope": "../",
   "display": "standalone",
