@@ -1476,8 +1476,8 @@
 
     // State Initialization under storage key (_v10, weeks and checks _v11)
     let dinners = readLocal('family_dinners_v10', null) || DEFAULT_DINNERS;
-    // Baby lunches replaced the per-day baby breakfast. The old `breakfasts` key and each day's
-    // `breakfast` field stay on the server untouched, but nothing reads them any more.
+    // Baby lunches replaced the per-day baby breakfast. Each day's old `breakfast` field is left in place
+    // but unread. The old `breakfasts` key was removed by the first device that synced after the change.
     let babyLunches = readLocal('family_baby_lunches_v10', null) || (BABY_MODE ? DEFAULT_BABY_LUNCHES : []);
     // false means no usual breakfast (null would delete the key on the server)
     let usualBreakfast = readLocal('family_usual_breakfast_v10', null) ?? (BABY_MODE ? DEFAULT_USUAL_BREAKFAST : false);
